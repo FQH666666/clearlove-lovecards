@@ -1,6 +1,6 @@
 # clearlove-lovecards
 ## clearlove 清简表白墙，一款现代化，轻量化，便捷化的表白墙网站源码项目，基于php开发。
-[clearlove]（https://clearlove.kazx.top/logo.webp）
+[clearlove](https://clearlove.kazx.top/logo.webp)
 ### 官网 https://clearlove.kazx.top
 ### QQ用户群:1091864583
 ### 宝塔面板搭建教程 https://fangqihang.cn/article.php?id=2
