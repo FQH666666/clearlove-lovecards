@@ -212,10 +212,22 @@ function checkUpdate() {
                 'download_url' => $result['download_url'],
                 'release_notes' => $result['release_notes']
             ];
+        } else {
+            return [
+                'has_update' => false,
+                'version' => $latestVersion,
+                'download_url' => $result['download_url'],
+                'release_notes' => $result['release_notes']
+            ];
         }
+    } else {
+        return [
+            'has_update' => false,
+            'version' => APP_VERSION,
+            'download_url' => '',
+            'release_notes' => ''
+        ];
     }
-    
-    return ['has_update' => false];
 }
 
 // 获取公告
@@ -260,4 +272,40 @@ function reportInstallation() {
         'domain' => $domain,
         'version' => APP_VERSION
     ]);
+}
+
+// 检查更新
+function checkForUpdates() {
+    $result = callCloudApi('check_update', [
+        'version' => APP_VERSION
+    ]);
+    
+    if (isset($result['error'])) {
+        return ['error' => $result['error']];
+    }
+    
+    if (isset($result['version'])) {
+        // 解密信息
+        if (isset($result['download_url'])) {
+            $result['download_url'] = decrypt($result['download_url']);
+        }
+        if (isset($result['release_notes'])) {
+            $result['release_notes'] = decrypt($result['release_notes']);
+        }
+        
+        // 比较版本
+        $currentVersion = APP_VERSION;
+        $latestVersion = $result['version'];
+        
+        if (version_compare($latestVersion, $currentVersion, '>')) {
+            return [
+                'has_update' => true,
+                'version' => $latestVersion,
+                'download_url' => $result['download_url'],
+                'release_notes' => $result['release_notes']
+            ];
+        }
+    }
+    
+    return ['has_update' => false];
 }

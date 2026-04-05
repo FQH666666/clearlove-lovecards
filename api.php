@@ -83,6 +83,65 @@ if ($action === 'upload') {
     exit;
 }
 
+if ($action === 'upload_music') {
+    if (!isset($_FILES['bg_music_file'])) {
+        echo json_encode(['success' => false, 'error' => '没有文件']);
+        exit;
+    }
+    
+    $file = $_FILES['bg_music_file'];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    
+    // 检查文件类型
+    $allowedExts = ['mp3', 'wav', 'ogg', 'm4a'];
+    if (!in_array($ext, $allowedExts)) {
+        echo json_encode(['success' => false, 'error' => '不支持的文件类型']);
+        exit;
+    }
+    
+    // 检查文件大小
+    $maxSize = 50 * 1024 * 1024; // 50MB
+    if ($file['size'] > $maxSize) {
+        echo json_encode(['success' => false, 'error' => '文件大小不能超过50MB']);
+        exit;
+    }
+    
+    $fileName = uniqid() . '.' . $ext;
+    $uploadPath = UPLOAD_DIR . '/' . $fileName;
+    
+    if (!is_dir(UPLOAD_DIR)) {
+        mkdir(UPLOAD_DIR, 0755, true);
+    }
+    
+    if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+        // 更新配置文件
+        $envContent = "<?php\n";
+        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
+        if (DB_TYPE === 'mysql') {
+            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
+            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
+            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
+            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
+        }
+        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
+        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
+        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
+        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
+        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
+        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
+        $envContent .= "define('BG_MUSIC_ENABLED', true);\n";
+        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($fileName) . "');\n";
+        $envContent .= "define('BG_MUSIC_VOLUME', " . (defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50) . ");\n";
+        $envContent .= "define('INSTALLED', true);\n";
+        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        
+        echo json_encode(['success' => true, 'file' => $fileName]);
+    } else {
+        echo json_encode(['success' => false, 'error' => '上传失败']);
+    }
+    exit;
+}
+
 if ($action === 'captcha') {
     session_start();
     
@@ -150,6 +209,19 @@ if ($action === 'get_cloud_sensitive_words') {
         echo json_encode(['success' => false, 'error' => $result['error']]);
     } else {
         echo json_encode(['success' => true, 'words' => $result['words']]);
+    }
+    exit;
+}
+
+if ($action === 'check_update') {
+    require_once 'functions.php';
+    
+    $updateInfo = checkUpdate();
+    
+    if (isset($updateInfo['error'])) {
+        echo json_encode(['success' => false, 'error' => $updateInfo['error']]);
+    } else {
+        echo json_encode(['success' => true, 'has_update' => $updateInfo['has_update'], 'version' => $updateInfo['version'], 'release_notes' => $updateInfo['release_notes'], 'download_url' => $updateInfo['download_url']]);
     }
     exit;
 }

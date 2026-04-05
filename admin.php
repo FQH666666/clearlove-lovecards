@@ -189,6 +189,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['delete_announcement'];
         $db->exec("DELETE FROM announcements WHERE id = $id");
     }
+    
+    if (isset($_POST['update_announcement'])) {
+        $id = (int)$_POST['edit_announcement_id'];
+        $content = $_POST['edit_announcement_content'];
+        $image = '';
+        
+        if (isset($_FILES['edit_announcement_image']) && $_FILES['edit_announcement_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/uploads';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $imageName = uniqid() . '.' . pathinfo($_FILES['edit_announcement_image']['name'], PATHINFO_EXTENSION);
+            move_uploaded_file($_FILES['edit_announcement_image']['tmp_name'], $uploadDir . '/' . $imageName);
+            $image = $imageName;
+        }
+        
+        if ($image) {
+            $stmt = $db->prepare("UPDATE announcements SET content = ?, image = ? WHERE id = ?");
+            $stmt->execute([$content, $image, $id]);
+        } else {
+            $stmt = $db->prepare("UPDATE announcements SET content = ? WHERE id = ?");
+            $stmt->execute([$content, $id]);
+        }
+    }
     if (isset($_POST['update_site_name'])) {
         $envContent = "<?php\n";
         $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
@@ -242,6 +266,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $envContent .= "define('PURE_MODE', " . (isset($_POST['pure_mode']) ? 'true' : 'false') . ");\n";
         $envContent .= "define('SENSITIVE_WORDS', '" . addslashes($_POST['sensitive_words']) . "');\n";
         $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
+        $envContent .= "define('BG_MUSIC_ENABLED', " . (defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : 'false') . ");\n";
+        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes(defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '') . "');\n";
+        $envContent .= "define('BG_MUSIC_VOLUME', " . (defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50) . ");\n";
+        $envContent .= "define('INSTALLED', true);\n";
+        file_put_contents(__DIR__ . '/.env.php', $envContent);
+    }
+    
+    if (isset($_POST['update_bg_music'])) {
+        $bgMusicEnabled = isset($_POST['bg_music_enabled']) ? 'true' : 'false';
+        $bgMusicVolume = intval($_POST['bg_music_volume'] ?? 50);
+        $bgMusicFile = defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '';
+        
+        if (isset($_FILES['bg_music_file']) && $_FILES['bg_music_file']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/uploads';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $musicName = uniqid() . '.' . pathinfo($_FILES['bg_music_file']['name'], PATHINFO_EXTENSION);
+            move_uploaded_file($_FILES['bg_music_file']['tmp_name'], $uploadDir . '/' . $musicName);
+            $bgMusicFile = $musicName;
+        }
+        
+        $envContent = "<?php\n";
+        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
+        if (DB_TYPE === 'mysql') {
+            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
+            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
+            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
+            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
+        }
+        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
+        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
+        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
+        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
+        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
+        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
+        $envContent .= "define('BG_MUSIC_ENABLED', " . $bgMusicEnabled . ");\n";
+        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($bgMusicFile) . "');\n";
+        $envContent .= "define('BG_MUSIC_VOLUME', " . $bgMusicVolume . ");\n";
+        $envContent .= "define('INSTALLED', true);\n";
+        file_put_contents(__DIR__ . '/.env.php', $envContent);
+    }
+    
+    if (isset($_POST['delete_bg_music'])) {
+        $envContent = "<?php\n";
+        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
+        if (DB_TYPE === 'mysql') {
+            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
+            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
+            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
+            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
+        }
+        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
+        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
+        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
+        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
+        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
+        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
+        $envContent .= "define('BG_MUSIC_ENABLED', false);\n";
+        $envContent .= "define('BG_MUSIC_FILE', '');\n";
+        $envContent .= "define('BG_MUSIC_VOLUME', 50);\n";
         $envContent .= "define('INSTALLED', true);\n";
         file_put_contents(__DIR__ . '/.env.php', $envContent);
     }
@@ -427,6 +512,9 @@ $fileTypes = $storage['fileTypes'];
                 </a>
                 <a href="?page=announcements" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'announcements' ? 'active' : ''; ?>">
                     <i class="fas fa-bullhorn w-5 mr-3"></i>公告与话题
+                </a>
+                <a href="?page=about" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'about' ? 'active' : ''; ?>">
+                    <i class="fas fa-info-circle w-5 mr-3"></i>关于系统
                 </a>
                 <a href="?page=logout" class="flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50">
                     <i class="fas fa-sign-out-alt w-5 mr-3"></i>退出登录
@@ -1091,6 +1179,83 @@ $fileTypes = $storage['fileTypes'];
                     }
                 </style>
                 
+                <!-- 背景音乐配置 -->
+                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg max-w-2xl mt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-music mr-2 text-purple-500"></i>背景音乐</h3>
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-6">
+                            <label class="flex items-center justify-between">
+                                <span class="text-gray-700">启用背景音乐</span>
+                                <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                                    <input type="checkbox" name="bg_music_enabled" <?php echo defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED ? 'checked' : ''; ?> class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in-out" id="bg_music_toggle">
+                                    <label for="bg_music_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out"></label>
+                                </div>
+                            </label>
+                            <p class="text-sm text-gray-500 mt-2">开启后首页会自动播放背景音乐</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">上传音乐文件</label>
+                            <input type="file" name="bg_music_file" accept="audio/*" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" onchange="uploadMusic(this)">
+                            
+                            <!-- 上传进度条 -->
+                            <div id="uploadProgress" class="mt-2 hidden">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <p id="uploadStatus" class="mt-1 text-sm text-gray-600">准备上传...</p>
+                            </div>
+                            
+                            <!-- 已上传音乐管理 -->
+                            <?php if (defined('BG_MUSIC_FILE') && BG_MUSIC_FILE): ?>
+                                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-gray-800">当前音乐</p>
+                                            <p class="text-sm text-gray-600"><?php echo BG_MUSIC_FILE; ?></p>
+                                        </div>
+                                        <form method="POST" class="inline" onsubmit="return confirm('确定删除当前音乐吗？');">
+                                            <input type="hidden" name="delete_bg_music" value="1">
+                                            <button type="submit" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">音量（默认50%）</label>
+                            <input type="range" name="bg_music_volume" min="0" max="100" value="<?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span><?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="update_bg_music" value="1">
+                        <button type="submit" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+                            <i class="fas fa-save mr-2"></i>保存配置
+                        </button>
+                    </form>
+                </div>
+                
+                <style>
+                    .toggle-checkbox:checked {
+                        right: 0;
+                        border-color: #66bb6a;
+                    }
+                    .toggle-checkbox:checked + .toggle-label {
+                        background-color: #66bb6a;
+                    }
+                    .toggle-checkbox {
+                        right: 6px;
+                        top: 6px;
+                    }
+                </style>
+                
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const colorInputs = document.querySelectorAll('input[type="color"]');
@@ -1121,6 +1286,60 @@ $fileTypes = $storage['fileTypes'];
                             .catch(error => {
                                 alert('获取云端词库失败：网络错误');
                             });
+                    }
+                    
+                    // 音乐上传进度条
+                    function uploadMusic(input) {
+                        const file = input.files[0];
+                        if (!file) return;
+                        
+                        const progressDiv = document.getElementById('uploadProgress');
+                        const progressBar = document.getElementById('progressBar');
+                        const status = document.getElementById('uploadStatus');
+                        
+                        progressDiv.classList.remove('hidden');
+                        status.textContent = '正在上传...';
+                        
+                        const formData = new FormData();
+                        formData.append('bg_music_file', file);
+                        formData.append('upload_bg_music', '1');
+                        
+                        const xhr = new XMLHttpRequest();
+                        
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if (e.lengthComputable) {
+                                const percent = (e.loaded / e.total) * 100;
+                                progressBar.style.width = percent + '%';
+                                status.textContent = '上传中 ' + Math.round(percent) + '%';
+                            }
+                        });
+                        
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                try {
+                                    const response = JSON.parse(xhr.responseText);
+                                    if (response.success) {
+                                        status.textContent = '上传成功！';
+                                        setTimeout(() => {
+                                            location.reload();
+                                        }, 1000);
+                                    } else {
+                                        status.textContent = '上传失败: ' + (response.error || '未知错误');
+                                    }
+                                } catch (e) {
+                                    status.textContent = '上传失败: 服务器响应错误';
+                                }
+                            } else {
+                                status.textContent = '上传失败: 网络错误';
+                            }
+                        };
+                        
+                        xhr.onerror = function() {
+                            status.textContent = '上传失败: 网络错误';
+                        };
+                        
+                        xhr.open('POST', 'api.php?action=upload_music');
+                        xhr.send(formData);
                     }
                 </script>
             <?php elseif ($page === 'posts'): ?>
@@ -1185,9 +1404,92 @@ $fileTypes = $storage['fileTypes'];
                         document.getElementById('editForm' + id).classList.toggle('hidden');
                     }
                 </script>
+            <?php elseif ($page === 'about'): ?>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-info-circle mr-2 text-blue-500"></i>关于系统</h2>
+                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-8 shadow-lg max-w-2xl">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent mb-4">
+                            clearlove表白墙
+                        </h1>
+                        <p class="text-gray-600 mb-6">仰望星辰工作室，夏日之瓜，出品</p>
+                        <div class="flex justify-center gap-4 mb-6">
+                            <a href="https://clearlove.kazx.top/" target="_blank" class="text-blue-600 hover:text-blue-800 transition flex items-center gap-2">
+                                <i class="fas fa-globe"></i>官网
+                            </a>
+                            <a href="https://github.com/FQH666666/clearlove-lovecards" target="_blank" class="text-gray-600 hover:text-gray-800 transition flex items-center gap-2">
+                                <i class="fab fa-github"></i>GitHub
+                            </a>
+                        </div>
+                        <p class="text-gray-500 mb-8">© 2026</p>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">版本信息</h3>
+                            <span class="text-blue-600 font-medium">v<?php echo APP_VERSION; ?></span>
+                        </div>
+                        <button onclick="checkUpdate()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                            <i class="fas fa-sync-alt"></i>检查更新
+                        </button>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <span class="text-red-600">♥</span> 捐赠开发者
+                        </h3>
+                        <button onclick="openDonateModal()" class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                            <i class="fas fa-heart"></i>捐赠支持
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 捐赠弹窗 -->
+                <div id="donateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">感谢捐助</h3>
+                            <button onclick="closeDonateModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                        </div>
+                        <p class="text-gray-700 mb-6 text-center">您的捐助会让项目走得更远</p>
+                        <div class="flex justify-center mb-6">
+                            <img src="https://clearlove.kazx.top/%E6%8D%90%E8%B5%A0.webp" alt="捐赠二维码" class="w-48 h-48 object-contain">
+                        </div>
+                        <button onclick="closeDonateModal()" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+                
+                <script>
+                    function openDonateModal() {
+                        document.getElementById('donateModal').classList.remove('hidden');
+                    }
+                    
+                    function closeDonateModal() {
+                        document.getElementById('donateModal').classList.add('hidden');
+                    }
+                    
+                    function checkUpdate() {
+                        fetch('api.php?action=check_update')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    if (data.has_update) {
+                                        alert('发现新版本 v' + data.version + '\n\n更新说明:\n' + data.release_notes + '\n\n请前往官网下载更新');
+                                    } else {
+                                        alert('当前已是最新版本');
+                                    }
+                                } else {
+                                    alert('检查更新失败: ' + (data.error || '未知错误'));
+                                }
+                            })
+                            .catch(error => {
+                                alert('检查更新失败: 网络错误');
+                            });
+                    }
+                </script>
             <?php elseif ($page === 'announcements'): ?>
                 <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-bullhorn mr-2 text-yellow-500"></i>公告与话题</h2>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
                         <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-bullhorn mr-2 text-yellow-500"></i>公告管理</h3>
@@ -1207,6 +1509,9 @@ $fileTypes = $storage['fileTypes'];
                                             <?php echo $a['active'] ? '启用中' : '已禁用'; ?>
                                         </span>
                                         <div class="flex gap-2">
+                                            <button type="button" class="text-blue-500 hover:text-blue-700 text-sm" onclick="openEditAnnouncementModal(<?php echo $a['id']; ?>, '<?php echo addslashes($a['content']); ?>', '<?php echo $a['image']; ?>')">
+                                                编辑
+                                            </button>
                                             <form method="POST" class="inline">
                                                 <input type="hidden" name="toggle_announcement" value="<?php echo $a['id']; ?>">
                                                 <button type="submit" class="text-blue-500 hover:text-blue-700 text-sm">
@@ -1322,6 +1627,30 @@ $fileTypes = $storage['fileTypes'];
     </script>
     <?php endif; ?>
 
+    <!-- 编辑公告弹窗 -->
+    <div id="editAnnouncementModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">编辑公告</h3>
+                <button onclick="closeEditAnnouncementModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" id="edit_announcement_id" name="edit_announcement_id">
+                <textarea id="edit_announcement_content" name="edit_announcement_content" placeholder="公告内容" rows="3" required class="w-full px-4 py-3 border border-gray-200 rounded-xl mb-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"></textarea>
+                <input type="file" name="edit_announcement_image" accept="image/*" class="mb-3">
+                <div id="edit_announcement_image_preview" class="mb-3"></div>
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeEditAnnouncementModal()" class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        取消
+                    </button>
+                    <button type="submit" name="update_announcement" class="flex-1 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:opacity-90 transition">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 云控公告弹窗 -->
     <?php if (is_array($cloudAnnouncements) && !isset($cloudAnnouncements['error']) && !empty($cloudAnnouncements)): ?>
     <?php foreach ($cloudAnnouncements as $announcement): ?>
@@ -1359,6 +1688,23 @@ $fileTypes = $storage['fileTypes'];
                 document.cookie = 'cloud_announcement_seen_' + id + '=1; expires=' + new Date(Date.now() + 86400000).toUTCString() + '; path=/';
             }
         }
+        
+        // 编辑公告相关脚本
+        function openEditAnnouncementModal(id, content, image) {
+            document.getElementById('edit_announcement_id').value = id;
+            document.getElementById('edit_announcement_content').value = content;
+            const previewDiv = document.getElementById('edit_announcement_image_preview');
+            if (image) {
+                previewDiv.innerHTML = '<img src="uploads/' + image + '" class="w-32 h-32 object-cover rounded-lg">';
+            } else {
+                previewDiv.innerHTML = '';
+            }
+            document.getElementById('editAnnouncementModal').classList.remove('hidden');
+        }
+        
+        function closeEditAnnouncementModal() {
+            document.getElementById('editAnnouncementModal').classList.add('hidden');
+        }
     </script>
-</body>
+    </body>
 </html>

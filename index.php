@@ -35,6 +35,47 @@ $parsedown = new Parsedown();
     <link href="https://cdn.staticfile.net/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.staticfile.net/font-awesome/6.5.1/css/all.min.css">
     <style>
+        /* 背景音乐CD图标 */
+        .music-cd {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f5f5f5, #e0e0e0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .music-cd:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .music-cd.playing {
+            animation: spin 20s linear infinite;
+        }
+        
+        .music-cd::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #333;
+            z-index: 1;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         <?php
         // 检查是否是节日
         function isHoliday() {
@@ -552,6 +593,15 @@ $parsedown = new Parsedown();
     </style>
 </head>
 <body class="pb-20<?php if ($holiday) echo ' ' . $holiday; ?>">
+    <!-- 背景音乐 -->
+    <?php if (defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED && defined('BG_MUSIC_FILE') && BG_MUSIC_FILE): ?>
+    <audio id="bgMusic" loop>
+        <source src="uploads/<?php echo BG_MUSIC_FILE; ?>" type="audio/mp3">
+    </audio>
+    <div class="music-cd" id="musicCd" onclick="toggleMusic()">
+        <i class="fas fa-music text-2xl text-gray-600 z-10"></i>
+    </div>
+    <?php endif; ?>
     <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
         <div class="max-w-4xl mx-auto px-4 py-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -756,6 +806,71 @@ $parsedown = new Parsedown();
             document.getElementById('announcementModal').classList.remove('active');
             document.cookie = 'announcement_seen_<?php echo $announcement["id"]; ?>=1; expires=' + new Date(Date.now() + 86400000).toUTCString() + '; path=/';
         }
+    </script>
+    <?php endif; ?>
+    
+    <!-- 背景音乐控制 -->
+    <?php if (defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED && defined('BG_MUSIC_FILE') && BG_MUSIC_FILE): ?>
+    <script>
+        const bgMusic = document.getElementById('bgMusic');
+        const musicCd = document.getElementById('musicCd');
+        const volume = <?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?> / 100;
+        
+        // 设置音量
+        bgMusic.volume = volume;
+        
+        // 自动播放音乐
+        window.addEventListener('DOMContentLoaded', function() {
+            // 尝试自动播放
+            bgMusic.play().catch(function(error) {
+                console.log('自动播放失败:', error);
+                // 自动播放失败时，等待用户交互后再播放
+                document.addEventListener('click', function playOnClick() {
+                    bgMusic.play().catch(function() {});
+                    document.removeEventListener('click', playOnClick);
+                }, { once: true });
+            });
+            
+            // 添加播放状态类
+            if (!bgMusic.paused) {
+                musicCd.classList.add('playing');
+            }
+        });
+        
+        // 确保音乐默认播放
+        function ensureMusicPlaying() {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(function() {});
+            }
+        }
+        
+        // 页面加载完成后确保音乐播放
+        window.addEventListener('load', ensureMusicPlaying);
+        
+        // 当用户与页面交互时确保音乐播放
+        document.addEventListener('click', ensureMusicPlaying, { once: true });
+        document.addEventListener('touchstart', ensureMusicPlaying, { once: true });
+        
+        function toggleMusic() {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(function(error) {
+                    console.log('播放失败:', error);
+                });
+                musicCd.classList.add('playing');
+            } else {
+                bgMusic.pause();
+                musicCd.classList.remove('playing');
+            }
+        }
+        
+        // 监听播放状态变化
+        bgMusic.addEventListener('play', function() {
+            musicCd.classList.add('playing');
+        });
+        
+        bgMusic.addEventListener('pause', function() {
+            musicCd.classList.remove('playing');
+        });
     </script>
     <?php endif; ?>
 </body>
