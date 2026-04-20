@@ -532,7 +532,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <?php echo mb_substr($post['nickname'], 0, 1); ?>
                 </div>
                 <div class="flex-1">
-                    <div class="font-semibold text-gray-800"><?php echo htmlspecialchars($post['nickname']); ?></div>
+                    <div class="font-semibold text-gray-800">
+                        <?php echo htmlspecialchars($post['nickname']); ?>
+                        <?php if (!empty($post['is_pinned'])): ?>
+                            <span class="ml-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs rounded-full"><i class="fas fa-thumbtack mr-1"></i>置顶</span>
+                        <?php endif; ?>
+                    </div>
                     <div class="text-sm text-gray-500"><?php echo formatTime($post['created_at']); ?></div>
                 </div>
             </div>

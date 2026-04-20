@@ -52,14 +52,34 @@ if ($action === 'upload') {
     
     $file = $_FILES['file'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $type = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? 'image' : 'video';
     
-    $maxVideoSize = 120 * 1024 * 1024;
+    // 严格白名单检查
+    $allowedImageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $allowedVideoExts = ['mp4', 'webm', 'mov'];
+    $allowedExts = array_merge($allowedImageExts, $allowedVideoExts);
+    
+    if (!in_array($ext, $allowedExts)) {
+        echo json_encode(['success' => false, 'error' => '不支持的文件类型']);
+        exit;
+    }
+    
+    $type = in_array($ext, $allowedImageExts) ? 'image' : 'video';
+    
+    // 文件大小限制
+    $maxVideoSize = 120 * 1024 * 1024; // 120MB
+    $maxImageSize = 50 * 1024 * 1024;  // 50MB
+    
     if ($type === 'video' && $file['size'] > $maxVideoSize) {
         echo json_encode(['success' => false, 'error' => '视频大小不能超过120MB']);
         exit;
     }
     
+    if ($type === 'image' && $file['size'] > $maxImageSize) {
+        echo json_encode(['success' => false, 'error' => '图片大小不能超过50MB']);
+        exit;
+    }
+    
+    // 文件名随机化
     $fileName = uniqid() . '.' . $ext;
     $uploadPath = UPLOAD_DIR . '/' . $fileName;
     
@@ -115,25 +135,22 @@ if ($action === 'upload_music') {
     
     if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
         // 更新配置文件
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-        $envContent .= "define('BG_MUSIC_ENABLED', true);\n";
-        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($fileName) . "');\n";
-        $envContent .= "define('BG_MUSIC_VOLUME', " . (defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50) . ");\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => true,
+            'bg_music_file' => $fileName,
+            'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50
+        ]);
         
         echo json_encode(['success' => true, 'file' => $fileName]);
     } else {

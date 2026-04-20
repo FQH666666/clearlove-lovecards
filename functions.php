@@ -24,9 +24,15 @@ function getDB() {
 
 function getPosts($db, $limit = 50) {
     $limit = (int)$limit;
-    $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
-                          FROM posts p ORDER BY p.created_at DESC LIMIT $limit");
-    return $stmt->fetchAll();
+    try {
+        $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
+                              FROM posts p ORDER BY p.is_pinned DESC, p.created_at DESC LIMIT $limit");
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
+                              FROM posts p ORDER BY p.created_at DESC LIMIT $limit");
+        return $stmt->fetchAll();
+    }
 }
 
 function getPost($db, $id) {
@@ -58,12 +64,13 @@ function getActiveAnnouncement($db) {
 }
 
 function formatTime($time) {
-    $diff = time() - strtotime($time);
+    $timestamp = strtotime($time . ' UTC');
+    $diff = time() - $timestamp;
     if ($diff < 60) return '刚刚';
     if ($diff < 3600) return floor($diff / 60) . '分钟前';
     if ($diff < 86400) return floor($diff / 3600) . '小时前';
     if ($diff < 604800) return floor($diff / 86400) . '天前';
-    return date('Y-m-d', strtotime($time));
+    return date('Y-m-d', $timestamp);
 }
 
 function getRandomColor($seed) {
@@ -308,4 +315,42 @@ function checkForUpdates() {
     }
     
     return ['has_update' => false];
+}
+
+function saveEnvConfig($config) {
+    $envPath = __DIR__ . '/.env.php';
+    $tempPath = $envPath . '.tmp.' . uniqid();
+    
+    $envContent = "<?php\n";
+    
+    $envContent .= "define('DB_TYPE', '" . addslashes($config['db_type'] ?? 'sqlite') . "');\n";
+    
+    if (($config['db_type'] ?? 'sqlite') === 'mysql') {
+        $envContent .= "define('DB_HOST', '" . addslashes($config['db_host'] ?? '') . "');\n";
+        $envContent .= "define('DB_NAME', '" . addslashes($config['db_name'] ?? '') . "');\n";
+        $envContent .= "define('DB_USER', '" . addslashes($config['db_user'] ?? '') . "');\n";
+        $envContent .= "define('DB_PASS', '" . addslashes($config['db_pass'] ?? '') . "');\n";
+    }
+    
+    $envContent .= "define('SITE_NAME', '" . addslashes($config['site_name'] ?? '校园表白墙') . "');\n";
+    $envContent .= "define('THEME', '" . addslashes($config['theme'] ?? 'default') . "');\n";
+    $envContent .= "define('CUSTOM_COLORS', '" . addslashes($config['custom_colors'] ?? '#66bb6a,#42a5f5') . "');\n";
+    $envContent .= "define('PURE_MODE', " . ($config['pure_mode'] ? 'true' : 'false') . ");\n";
+    $envContent .= "define('SENSITIVE_WORDS', '" . addslashes($config['sensitive_words'] ?? '') . "');\n";
+    $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes($config['theme_auto_switch'] ?? 'off') . "');\n";
+    $envContent .= "define('BG_MUSIC_ENABLED', " . ($config['bg_music_enabled'] ? 'true' : 'false') . ");\n";
+    $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($config['bg_music_file'] ?? '') . "');\n";
+    $envContent .= "define('BG_MUSIC_VOLUME', " . intval($config['bg_music_volume'] ?? 50) . ");\n";
+    $envContent .= "define('INSTALLED', true);\n";
+    
+    if (file_put_contents($tempPath, $envContent) === false) {
+        return false;
+    }
+    
+    if (!rename($tempPath, $envPath)) {
+        @unlink($tempPath);
+        return false;
+    }
+    
+    return true;
 }

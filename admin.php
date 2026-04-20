@@ -46,23 +46,22 @@ if (!$loggedIn && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // 如果云端词库与本地不同，则更新
                 if ($cloudWords !== $currentWords) {
-                    // 更新配置文件
-                    $envContent = "<?php\n";
-                    $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-                    if (DB_TYPE === 'mysql') {
-                        $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-                        $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-                        $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-                        $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-                    }
-                    $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-                    $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-                    $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-                    $envContent .= "define('PURE_MODE', true);\n";
-                    $envContent .= "define('SENSITIVE_WORDS', '" . addslashes($cloudWords) . "');\n";
-                    $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-                    $envContent .= "define('INSTALLED', true);\n";
-                    file_put_contents(__DIR__ . '/.env.php', $envContent);
+                    saveEnvConfig([
+                        'db_type' => DB_TYPE,
+                        'db_host' => defined('DB_HOST') ? DB_HOST : '',
+                        'db_name' => defined('DB_NAME') ? DB_NAME : '',
+                        'db_user' => defined('DB_USER') ? DB_USER : '',
+                        'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+                        'site_name' => SITE_NAME,
+                        'theme' => defined('THEME') ? THEME : 'default',
+                        'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+                        'pure_mode' => true,
+                        'sensitive_words' => $cloudWords,
+                        'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+                        'bg_music_enabled' => defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : false,
+                        'bg_music_file' => defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '',
+                        'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50
+                    ]);
                     
                     // 设置更新标志
                     $_SESSION['words_updated'] = true;
@@ -87,26 +86,49 @@ if (!$loggedIn) {
             background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
             min-height: 100vh;
         }
+        .login-card {
+            animation: slideUp 0.6s ease-out;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .input-focus:focus {
+            animation: pulse 0.3s ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
-    <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-xl p-8 max-w-md w-full">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent mb-2">
-                <i class="fas fa-cog mr-2"></i>后台管理
+    <div class="login-card bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 max-w-md w-full border border-white/20">
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <i class="fas fa-cog text-white text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent mb-3">
+                后台管理
             </h1>
             <p class="text-gray-500">请登录以继续</p>
         </div>
         <form method="POST">
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">管理员账号</label>
-                <input type="text" name="username" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-            </div>
             <div class="mb-6">
-                <label class="block text-gray-700 mb-2">管理员密码</label>
-                <input type="password" name="password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                <label class="block text-gray-700 mb-3 font-medium">管理员账号</label>
+                <input type="text" name="username" required class="input-focus w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 outline-none">
             </div>
-            <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+            <div class="mb-8">
+                <label class="block text-gray-700 mb-3 font-medium">管理员密码</label>
+                <input type="password" name="password" required class="input-focus w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 outline-none">
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-2xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
                 <i class="fas fa-sign-in-alt mr-2"></i>登录
             </button>
         </form>
@@ -119,7 +141,7 @@ exit;
 
 if ($page === 'logout') {
     session_destroy();
-    header('Location: admin.php');
+    header('Location: newadmin.php');
     exit;
 }
 
@@ -147,6 +169,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $db->exec("DELETE FROM posts WHERE id = $id");
     }
+    
+    if (isset($_POST['toggle_pin'])) {
+        $id = (int)$_POST['toggle_pin'];
+        try {
+            $stmt = $db->query("SELECT is_pinned FROM posts WHERE id = $id");
+            $post = $stmt->fetch();
+            $newPinStatus = empty($post['is_pinned']) ? 1 : 0;
+            $db->exec("UPDATE posts SET is_pinned = $newPinStatus WHERE id = $id");
+        } catch (PDOException $e) {
+            if (DB_TYPE === 'sqlite') {
+                $db->exec("ALTER TABLE posts ADD COLUMN is_pinned INTEGER DEFAULT 0");
+            } else {
+                $db->exec("ALTER TABLE posts ADD COLUMN is_pinned TINYINT(1) DEFAULT 0");
+            }
+            $db->exec("UPDATE posts SET is_pinned = 1 WHERE id = $id");
+        }
+    }
+    
     if (isset($_POST['delete_comment'])) {
         $id = (int)$_POST['delete_comment'];
         $db->exec("DELETE FROM comments WHERE id = $id");
@@ -158,7 +198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (isset($_POST['add_topic'])) {
         $name = $db->quote($_POST['topic_name']);
-        $db->exec("INSERT IGNORE INTO topics (name) VALUES ($name)");
+        if (DB_TYPE === 'mysql') {
+            $db->exec("INSERT IGNORE INTO topics (name) VALUES ($name)");
+        } else {
+            $db->exec("INSERT OR IGNORE INTO topics (name) VALUES ($name)");
+        }
     }
     if (isset($_POST['delete_topic'])) {
         $id = (int)$_POST['delete_topic'];
@@ -214,68 +258,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if (isset($_POST['update_site_name'])) {
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes($_POST['site_name']) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => $_POST['site_name'],
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : false,
+            'bg_music_file' => defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '',
+            'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50
+        ]);
     }
     
     if (isset($_POST['update_theme'])) {
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes($_POST['theme']) . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes($_POST['custom_colors']) . "');\n";
-        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes($_POST['theme_auto_switch']) . "');\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => $_POST['theme'],
+            'custom_colors' => $_POST['custom_colors'],
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => $_POST['theme_auto_switch'],
+            'bg_music_enabled' => defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : false,
+            'bg_music_file' => defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '',
+            'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50
+        ]);
     }
     
     if (isset($_POST['update_pure_mode'])) {
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-        $envContent .= "define('PURE_MODE', " . (isset($_POST['pure_mode']) ? 'true' : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes($_POST['sensitive_words']) . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-        $envContent .= "define('BG_MUSIC_ENABLED', " . (defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : 'false') . ");\n";
-        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes(defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '') . "');\n";
-        $envContent .= "define('BG_MUSIC_VOLUME', " . (defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50) . ");\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => isset($_POST['pure_mode']),
+            'sensitive_words' => $_POST['sensitive_words'],
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : false,
+            'bg_music_file' => defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '',
+            'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50
+        ]);
     }
     
     if (isset($_POST['update_bg_music'])) {
-        $bgMusicEnabled = isset($_POST['bg_music_enabled']) ? 'true' : 'false';
-        $bgMusicVolume = intval($_POST['bg_music_volume'] ?? 50);
         $bgMusicFile = defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '';
         
         if (isset($_FILES['bg_music_file']) && $_FILES['bg_music_file']['error'] === UPLOAD_ERR_OK) {
@@ -288,47 +327,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $bgMusicFile = $musicName;
         }
         
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-        $envContent .= "define('BG_MUSIC_ENABLED', " . $bgMusicEnabled . ");\n";
-        $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($bgMusicFile) . "');\n";
-        $envContent .= "define('BG_MUSIC_VOLUME', " . $bgMusicVolume . ");\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => isset($_POST['bg_music_enabled']),
+            'bg_music_file' => $bgMusicFile,
+            'bg_music_volume' => intval($_POST['bg_music_volume'] ?? 50)
+        ]);
     }
     
     if (isset($_POST['delete_bg_music'])) {
-        $envContent = "<?php\n";
-        $envContent .= "define('DB_TYPE', '" . addslashes(DB_TYPE) . "');\n";
-        if (DB_TYPE === 'mysql') {
-            $envContent .= "define('DB_HOST', '" . addslashes(DB_HOST) . "');\n";
-            $envContent .= "define('DB_NAME', '" . addslashes(DB_NAME) . "');\n";
-            $envContent .= "define('DB_USER', '" . addslashes(DB_USER) . "');\n";
-            $envContent .= "define('DB_PASS', '" . addslashes(DB_PASS) . "');\n";
-        }
-        $envContent .= "define('SITE_NAME', '" . addslashes(SITE_NAME) . "');\n";
-        $envContent .= "define('THEME', '" . addslashes(defined('THEME') ? THEME : 'default') . "');\n";
-        $envContent .= "define('CUSTOM_COLORS', '" . addslashes(defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5') . "');\n";
-        $envContent .= "define('PURE_MODE', " . (defined('PURE_MODE') ? PURE_MODE : 'false') . ");\n";
-        $envContent .= "define('SENSITIVE_WORDS', '" . addslashes(defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '') . "');\n";
-        $envContent .= "define('THEME_AUTO_SWITCH', '" . addslashes(defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') . "');\n";
-        $envContent .= "define('BG_MUSIC_ENABLED', false);\n";
-        $envContent .= "define('BG_MUSIC_FILE', '');\n";
-        $envContent .= "define('BG_MUSIC_VOLUME', 50);\n";
-        $envContent .= "define('INSTALLED', true);\n";
-        file_put_contents(__DIR__ . '/.env.php', $envContent);
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => false,
+            'bg_music_file' => '',
+            'bg_music_volume' => 50
+        ]);
     }
 }
 
@@ -393,1282 +426,1268 @@ $fileTypes = $storage['fileTypes'];
     <script src="https://cdn.staticfile.net/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.staticfile.net/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
-        }
-        .sidebar-link.active {
-            background: linear-gradient(135deg, rgba(102,187,106,0.2) 0%, rgba(66,165,245,0.2) 100%);
-            border-right: 3px solid #66bb6a;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        /* 移动端适配 */
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 4px 0 30px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar-header {
+            padding: 32px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .sidebar-logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(102, 187, 106, 0.3);
+        }
+        
+        .sidebar-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-nav {
+            padding: 24px 16px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item:hover {
+            background: rgba(102, 187, 106, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(102, 187, 106, 0.15) 0%, rgba(66, 165, 245, 0.15) 100%);
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .nav-item.active::before {
+            transform: scaleY(1);
+        }
+        
+        .nav-item i {
+            width: 24px;
+            margin-right: 16px;
+            font-size: 18px;
+        }
+        
+        .nav-item.logout {
+            color: #e53e3e;
+            margin-top: 24px;
+        }
+        
+        .nav-item.logout:hover {
+            background: rgba(229, 62, 62, 0.1);
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 32px;
+            min-height: 100vh;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-header {
+            margin-bottom: 32px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+        }
+        
+        .page-title i {
+            margin-right: 16px;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.6s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stat-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-icon.green {
+            background: linear-gradient(135deg, rgba(102, 187, 106, 0.2) 0%, rgba(102, 187, 106, 0.1) 100%);
+            color: #66bb6a;
+        }
+        
+        .stat-icon.blue {
+            background: linear-gradient(135deg, rgba(66, 165, 245, 0.2) 0%, rgba(66, 165, 245, 0.1) 100%);
+            color: #42a5f5;
+        }
+        
+        .stat-icon.purple {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2) 0%, rgba(156, 39, 176, 0.1) 100%);
+            color: #9c27b0;
+        }
+        
+        .stat-icon.yellow {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.1) 100%);
+            color: #ffc107;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .card-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 12px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(102, 187, 106, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 187, 106, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(229, 62, 62, 0.3);
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(229, 62, 62, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(113, 128, 150, 0.1);
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(113, 128, 150, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #66bb6a;
+            box-shadow: 0 0 0 4px rgba(102, 187, 106, 0.1);
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-textarea:focus {
+            outline: none;
+            border-color: #66bb6a;
+            box-shadow: 0 0 0 4px rgba(102, 187, 106, 0.1);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(28px);
+        }
+        
+        .theme-option {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-option.selected {
+            border-color: #66bb6a;
+            box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.2);
+        }
+        
+        .theme-preview {
+            height: 48px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        
+        @media (max-width: 1200px) {
+            .theme-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .theme-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .theme-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .page-loader.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #66bb6a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loader-text {
+            margin-top: 20px;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-menu-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                height: 100vh;
-                width: 85%;
-                max-width: 280px;
-                z-index: 100;
-                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+                transform: translateX(-100%);
             }
+            
             .sidebar.open {
-                left: 0;
+                transform: translateX(0);
             }
+            
             .main-content {
                 margin-left: 0;
-                width: 100%;
-                padding: 16px;
+                padding: 80px 16px 16px;
             }
+            
             .mobile-menu-btn {
-                display: block !important;
-                position: fixed;
-                top: 16px;
-                left: 16px;
-                z-index: 101;
-                width: 48px;
-                height: 48px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             }
-            .overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-                display: none;
-                transition: opacity 0.3s ease;
-            }
-            .overlay.active {
-                display: block;
-                opacity: 1;
-            }
-            .grid-cols-4 {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            .grid-cols-2 {
+            
+            .stats-grid {
                 grid-template-columns: 1fr;
-                gap: 12px;
             }
-            h2 {
-                font-size: 1.5rem;
-                margin-bottom: 16px;
+            
+            .page-title {
+                font-size: 24px;
             }
-            .bg-white\/90 {
-                border-radius: 12px;
-                padding: 16px;
-                margin-bottom: 16px;
+            
+            .stat-value {
+                font-size: 28px;
             }
-            button {
-                font-size: 14px;
-                padding: 10px 16px;
+        }
+        
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .theme-option {
+            height: 100px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+        
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .theme-option.selected {
+            border-color: #66bb6a;
+            box-shadow: 0 8px 24px rgba(102, 187, 106, 0.3);
+        }
+        
+        .theme-preview {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .post-item {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .post-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        
+        .announcement-item {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
             }
-            input, textarea, select {
-                font-size: 14px;
-                padding: 12px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
-            .theme-option {
-                height: 80px;
-            }
-            .theme-option .h-16 {
-                height: 48px;
-            }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            transition: width 0.3s ease;
         }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
+    <!-- 页面加载动画 -->
+    <div class="page-loader active" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">加载中...</div>
+    </div>
+    
     <!-- 移动端菜单按钮 -->
-    <button class="mobile-menu-btn fixed top-4 left-4 z-101 bg-white/90 backdrop-blur-lg p-2 rounded-lg shadow-lg text-gray-700 hidden" onclick="toggleSidebar()">
-        <i class="fas fa-bars text-xl transition-transform duration-300" id="menuIcon"></i>
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars text-xl text-gray-700" id="menuIcon"></i>
     </button>
     
     <!-- 侧边栏覆盖层 -->
     <div class="overlay" onclick="toggleSidebar()"></div>
     
-    <div class="flex min-h-screen">
-        <aside class="sidebar w-64 bg-white/90 backdrop-blur-lg shadow-xl">
-            <div class="p-6 border-b border-gray-100">
-                <h1 class="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
-                    <i class="fas fa-cog mr-2"></i>后台管理
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fas fa-cog text-white text-2xl"></i>
+            </div>
+            <h1 class="sidebar-title">后台管理</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="?page=dashboard" class="nav-item <?php echo $page === 'dashboard' ? 'active' : ''; ?>">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="?page=config" class="nav-item <?php echo $page === 'config' ? 'active' : ''; ?>">
+                <i class="fas fa-sliders-h"></i>
+                <span>网站配置</span>
+            </a>
+            <a href="?page=posts" class="nav-item <?php echo $page === 'posts' ? 'active' : ''; ?>">
+                <i class="fas fa-list"></i>
+                <span>帖子管理</span>
+            </a>
+            <a href="?page=announcements" class="nav-item <?php echo $page === 'announcements' ? 'active' : ''; ?>">
+                <i class="fas fa-bullhorn"></i>
+                <span>公告与话题</span>
+            </a>
+            <a href="?page=about" class="nav-item <?php echo $page === 'about' ? 'active' : ''; ?>">
+                <i class="fas fa-info-circle"></i>
+                <span>关于系统</span>
+            </a>
+            <a href="?page=logout" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <?php if ($page === 'dashboard'): ?>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-home"></i>
+                    数据概览
                 </h1>
             </div>
-            <nav class="p-4">
-                <a href="?page=dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'dashboard' ? 'active' : ''; ?>">
-                    <i class="fas fa-home w-5 mr-3"></i>首页
-                </a>
-                <a href="?page=config" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'config' ? 'active' : ''; ?>">
-                    <i class="fas fa-sliders-h w-5 mr-3"></i>网站配置
-                </a>
-                <a href="?page=posts" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'posts' ? 'active' : ''; ?>">
-                    <i class="fas fa-list w-5 mr-3"></i>帖子管理
-                </a>
-                <a href="?page=announcements" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'announcements' ? 'active' : ''; ?>">
-                    <i class="fas fa-bullhorn w-5 mr-3"></i>公告与话题
-                </a>
-                <a href="?page=about" class="sidebar-link flex items-center px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 <?php echo $page === 'about' ? 'active' : ''; ?>">
-                    <i class="fas fa-info-circle w-5 mr-3"></i>关于系统
-                </a>
-                <a href="?page=logout" class="flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50">
-                    <i class="fas fa-sign-out-alt w-5 mr-3"></i>退出登录
-                </a>
-            </nav>
-        </aside>
-
-        <main class="main-content flex-1 p-4 md:p-8">
-            <?php if ($page === 'dashboard'): ?>
-                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-home mr-2 text-green-600"></i>数据概览</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm">帖子总数</p>
-                                <p class="text-3xl font-bold text-gray-800"><?php echo $totalPosts; ?></p>
-                            </div>
-                            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-heart text-green-600 text-2xl"></i>
-                            </div>
-                        </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card" style="animation-delay: 0.1s;">
+                    <div class="stat-icon green">
+                        <i class="fas fa-heart"></i>
                     </div>
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm">今日访问IP</p>
-                                <p class="text-3xl font-bold text-gray-800"><?php echo $visitStats['today']; ?></p>
-                            </div>
-                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-users text-blue-600 text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm">近7日访问IP</p>
-                                <p class="text-3xl font-bold text-gray-800"><?php echo $visitStats['week']; ?></p>
-                            </div>
-                            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm">网站总占用空间</p>
-                                <p class="text-3xl font-bold text-gray-800"><?php echo formatFileSize($totalStorage); ?></p>
-                            </div>
-                            <div class="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-hdd text-yellow-600 text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-chart-bar mr-2 text-blue-500"></i>近7日访问统计</h3>
-                        <canvas id="visitChart" height="300"></canvas>
-                    </div>
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-chart-pie mr-2 text-yellow-500"></i>文件类型占用比例</h3>
-                        <canvas id="storageChart" height="300"></canvas>
-                    </div>
-                </div>
-
-                <script>
-                    // 访问统计图表
-                    const ctx = document.getElementById('visitChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: ['6天前', '5天前', '4天前', '3天前', '2天前', '昨天', '今天'],
-                            datasets: [{
-                                label: '访问IP数',
-                                data: <?php echo json_encode($visitStats['daily']); ?>,
-                                borderColor: '#66bb6a',
-                                backgroundColor: 'rgba(102, 187, 106, 0.1)',
-                                fill: true,
-                                tension: 0.4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-
-                    // 文件类型占用比例图表
-                    const storageCtx = document.getElementById('storageChart').getContext('2d');
-                    
-                    // 准备数据
-                    <?php
-                    $labels = [];
-                    $data = [];
-                    $backgroundColors = [
-                        '#66bb6a', '#42a5f5', '#ec407a', '#7e57c2', '#ffa726',
-                        '#ef5350', '#26c6da', '#ffca28', '#3f51b5', '#5e35b1',
-                        '#29b6f6', '#cddc39', '#00bcd4', '#66bb6a', '#9c27b0',
-                        '#e53935', '#4caf50', '#ff9800', '#1e88e5', '#7b1fa2'
-                    ];
-                    $colors = [];
-                    
-                    // 排序文件类型，按大小降序
-                    arsort($fileTypes);
-                    
-                    // 取前10种文件类型，其余归为"其他"
-                    $topTypes = array_slice($fileTypes, 0, 9);
-                    $otherSize = array_sum(array_slice($fileTypes, 9));
-                    
-                    if ($otherSize > 0) {
-                        $topTypes['其他'] = $otherSize;
-                    }
-                    
-                    foreach ($topTypes as $extension => $size) {
-                        $labels[] = $extension ?: '无扩展名';
-                        $data[] = $size;
-                        $colors[] = current($backgroundColors);
-                        next($backgroundColors);
-                    }
-                    
-                    $labelsJson = json_encode($labels);
-                    $dataJson = json_encode($data);
-                    $colorsJson = json_encode($colors);
-                    ?>
-                    
-                    new Chart(storageCtx, {
-                        type: 'pie',
-                        data: {
-                            labels: <?php echo $labelsJson; ?>,
-                            datasets: [{
-                                data: <?php echo $dataJson; ?>,
-                                backgroundColor: <?php echo $colorsJson; ?>,
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        padding: 20,
-                                        font: {
-                                            size: 12
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.label || '';
-                                            const value = context.raw;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = Math.round((value / total) * 100);
-                                            return `${label}: ${(value / 1024 / 1024).toFixed(2)} MB (${percentage}%)`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                </script>
-                
-                <script>
-                    // 移动端侧边栏切换
-                    function toggleSidebar() {
-                        const sidebar = document.querySelector('.sidebar');
-                        const overlay = document.querySelector('.overlay');
-                        const menuIcon = document.getElementById('menuIcon');
-                        
-                        sidebar.classList.toggle('open');
-                        overlay.classList.toggle('active');
-                        
-                        // 菜单图标动画
-                        if (sidebar.classList.contains('open')) {
-                            menuIcon.style.transform = 'rotate(90deg)';
-                        } else {
-                            menuIcon.style.transform = 'rotate(0)';
-                        }
-                    }
-                </script>
-            <?php elseif ($page === 'config'): ?>
-                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-sliders-h mr-2 text-blue-500"></i>网站配置</h2>
-                
-                <!-- 网站名称配置 -->
-                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg max-w-2xl mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-globe mr-2 text-blue-500"></i>网站名称</h3>
-                    <form method="POST">
-                        <div class="mb-4">
-                            <label class="block text-gray-700 mb-2">网站名称</label>
-                            <input type="text" name="site_name" value="<?php echo SITE_NAME; ?>" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-                        </div>
-                        <input type="hidden" name="update_site_name" value="1">
-                        <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
-                            <i class="fas fa-save mr-2"></i>保存配置
-                        </button>
-                    </form>
+                    <div class="stat-label">帖子总数</div>
+                    <div class="stat-value"><?php echo $totalPosts; ?></div>
                 </div>
                 
-                <!-- 配色主题配置 -->
-                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg max-w-2xl mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-palette mr-2 text-purple-500"></i>配色主题</h3>
-                    <form method="POST">
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">选择主题</label>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                                <?php
-                                $regularThemes = [
-                                    'default' => ['name' => '默认主题', 'colors' => '#66bb6a,#42a5f5'],
-                                    'pink' => ['name' => '粉色主题', 'colors' => '#ec407a,#ff80ab'],
-                                    'purple' => ['name' => '紫色主题', 'colors' => '#7e57c2,#ab47bc'],
-                                    'orange' => ['name' => '橙色主题', 'colors' => '#ffa726,#ff7043'],
-                                    'red' => ['name' => '红色主题', 'colors' => '#ef5350,#e53935'],
-                                    'teal' => ['name' => '青色主题', 'colors' => '#26c6da,#00acc1'],
-                                    'amber' => ['name' => '琥珀主题', 'colors' => '#ffca28,#ff9800'],
-                                    'indigo' => ['name' => '靛蓝主题', 'colors' => '#3f51b5,#5c6bc0'],
-                                    'deep-purple' => ['name' => '深紫主题', 'colors' => '#5e35b1,#4527a0'],
-                                    'light-blue' => ['name' => '浅蓝主题', 'colors' => '#29b6f6,#03a9f4'],
-                                    'lime' => ['name' => '青柠主题', 'colors' => '#cddc39,#8bc34a'],
-                                    'cyan' => ['name' => '蓝绿色主题', 'colors' => '#00bcd4,#0097a7'],
-                                    'teal-green' => ['name' => '青绿主题', 'colors' => '#66bb6a,#43a047'],
-                                    'purple-pink' => ['name' => '紫粉主题', 'colors' => '#9c27b0,#e91e63'],
-                                    'blue-indigo' => ['name' => '蓝靛主题', 'colors' => '#1e88e5,#3949ab'],
-                                    'orange-red' => ['name' => '橙红主题', 'colors' => '#ff9800,#f44336'],
-                                    'green-teal' => ['name' => '绿青主题', 'colors' => '#4caf50,#009688'],
-                                    'blue-cyan' => ['name' => '蓝青主题', 'colors' => '#2196f3,#00bcd4'],
-                                    'purple-indigo' => ['name' => '紫靛主题', 'colors' => '#7b1fa2,#303f9f'],
-                                    'pink-red' => ['name' => '粉红主题', 'colors' => '#e91e63,#c2185b'],
-                                    'amber-orange' => ['name' => '琥珀橙主题', 'colors' => '#ffb300,#ff7043'],
-                                    'teal-cyan' => ['name' => '青蓝主题', 'colors' => '#26a69a,#00acc1'],
-                                    'indigo-purple' => ['name' => '靛紫主题', 'colors' => '#536dfe,#7b1fa2'],
-                                    'green-lime' => ['name' => '绿柠主题', 'colors' => '#4caf50,#cddc39'],
-                                    'custom' => ['name' => '自定义主题', 'colors' => '']
-                                ];
-                                
-                                $holidayThemes = [
-                                    'christmas' => ['name' => '圣诞主题', 'colors' => '#e53935,#43a047'],
-                                    'valentine' => ['name' => '情人节主题', 'colors' => '#e91e63,#c2185b'],
-                                    'spring' => ['name' => '春节主题', 'colors' => '#e53935,#ffb300'],
-                                    'mayday' => ['name' => '劳动节主题', 'colors' => '#4caf50,#81c784'],
-                                    'children' => ['name' => '儿童节主题', 'colors' => '#ff9800,#ffb74d'],
-                                    'midautumn' => ['name' => '中秋节主题', 'colors' => '#9c27b0,#ba68c8'],
-                                    'national' => ['name' => '国庆节主题', 'colors' => '#e53935,#ff5722'],
-                                    'qingming' => ['name' => '清明节主题', 'colors' => '#4caf50,#81c784'],
-                                    'dragon' => ['name' => '端午节主题', 'colors' => '#e53935,#ff9800'],
-                                    'qixi' => ['name' => '七夕节主题', 'colors' => '#e91e63,#9c27b0']
-                                ];
-                                
-                                $currentTheme = defined('THEME') ? THEME : 'default';
-                                ?>
-                                
-                                <!-- 常规主题 -->
-                                <div id="regularThemesContainer">
-                                <?php
-                                    $themeCount = 0;
-                                    $totalThemes = count($regularThemes) - 1; // 减去自定义主题
-                                    foreach ($regularThemes as $key => $theme) {
-                                        if ($key === 'custom') continue;
-                                        $themeCount++;
+                <div class="stat-card" style="animation-delay: 0.2s;">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-label">今日访问IP</div>
+                    <div class="stat-value"><?php echo $visitStats['today']; ?></div>
+                </div>
+                
+                <div class="stat-card" style="animation-delay: 0.3s;">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-label">近7日访问IP</div>
+                    <div class="stat-value"><?php echo $visitStats['week']; ?></div>
+                </div>
+                
+                <div class="stat-card" style="animation-delay: 0.4s;">
+                    <div class="stat-icon yellow">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="stat-label">网站总占用空间</div>
+                    <div class="stat-value"><?php echo formatFileSize($totalStorage); ?></div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar text-blue-500"></i>
+                        近7日访问统计
+                    </div>
+                    <canvas id="visitChart" height="300"></canvas>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie text-yellow-500"></i>
+                        文件类型占用比例
+                    </div>
+                    <canvas id="storageChart" height="300"></canvas>
+                </div>
+            </div>
+            
+        <?php elseif ($page === 'config'): ?>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-sliders-h"></i>
+                    网站配置
+                </h1>
+            </div>
+            
+            <!-- 网站名称配置 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-globe text-green-500"></i>
+                    网站名称
+                </div>
+                <form method="POST">
+                    <div class="form-group">
+                        <label class="form-label">网站名称</label>
+                        <input type="text" name="site_name" value="<?php echo SITE_NAME; ?>" class="form-input">
+                    </div>
+                    <button type="submit" name="update_site_name" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>保存配置
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 主题配置 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-palette text-purple-500"></i>
+                    配色主题
+                </div>
+                <form method="POST" id="themeForm">
+                    <div class="form-group">
+                        <label class="form-label">选择主题</label>
+                        <div class="theme-grid">
+                            <?php
+                            $regularThemes = [
+                                'default' => ['name' => '默认主题', 'colors' => '#66bb6a,#42a5f5'],
+                                'pink' => ['name' => '粉色主题', 'colors' => '#ec407a,#ff80ab'],
+                                'purple' => ['name' => '紫色主题', 'colors' => '#7e57c2,#ab47bc'],
+                                'orange' => ['name' => '橙色主题', 'colors' => '#ffa726,#ff7043'],
+                                'red' => ['name' => '红色主题', 'colors' => '#ef5350,#e53935'],
+                                'teal' => ['name' => '青色主题', 'colors' => '#26c6da,#00acc1'],
+                                'amber' => ['name' => '琥珀主题', 'colors' => '#ffca28,#ff9800'],
+                                'indigo' => ['name' => '靛蓝主题', 'colors' => '#3f51b5,#5c6bc0'],
+                                'deep-purple' => ['name' => '深紫主题', 'colors' => '#5e35b1,#4527a0'],
+                                'light-blue' => ['name' => '浅蓝主题', 'colors' => '#29b6f6,#03a9f4'],
+                                'lime' => ['name' => '青柠主题', 'colors' => '#cddc39,#8bc34a'],
+                                'cyan' => ['name' => '蓝绿色主题', 'colors' => '#00bcd4,#0097a7'],
+                                'teal-green' => ['name' => '青绿主题', 'colors' => '#66bb6a,#43a047'],
+                                'purple-pink' => ['name' => '紫粉主题', 'colors' => '#9c27b0,#e91e63'],
+                                'blue-indigo' => ['name' => '蓝靛主题', 'colors' => '#1e88e5,#3949ab'],
+                                'orange-red' => ['name' => '橙红主题', 'colors' => '#ff9800,#f44336'],
+                                'green-teal' => ['name' => '绿青主题', 'colors' => '#4caf50,#009688'],
+                                'blue-cyan' => ['name' => '蓝青主题', 'colors' => '#2196f3,#00bcd4'],
+                                'purple-indigo' => ['name' => '紫靛主题', 'colors' => '#7b1fa2,#303f9f'],
+                                'pink-red' => ['name' => '粉红主题', 'colors' => '#e91e63,#c2185b'],
+                                'amber-orange' => ['name' => '琥珀橙主题', 'colors' => '#ffb300,#ff7043'],
+                                'teal-cyan' => ['name' => '青蓝主题', 'colors' => '#26a69a,#00acc1'],
+                                'indigo-purple' => ['name' => '靛紫主题', 'colors' => '#536dfe,#7b1fa2'],
+                                'green-lime' => ['name' => '绿柠主题', 'colors' => '#4caf50,#cddc39'],
+                                'custom' => ['name' => '自定义主题', 'colors' => '']
+                            ];
+                            
+                            $holidayThemes = [
+                                'christmas' => ['name' => '圣诞主题', 'colors' => '#e53935,#43a047'],
+                                'valentine' => ['name' => '情人节主题', 'colors' => '#e91e63,#c2185b'],
+                                'spring' => ['name' => '春节主题', 'colors' => '#e53935,#ffb300'],
+                                'mayday' => ['name' => '劳动节主题', 'colors' => '#4caf50,#81c784'],
+                                'children' => ['name' => '儿童节主题', 'colors' => '#ff9800,#ffb74d'],
+                                'midautumn' => ['name' => '中秋节主题', 'colors' => '#9c27b0,#ba68c8'],
+                                'national' => ['name' => '国庆节主题', 'colors' => '#e53935,#ff5722'],
+                                'qingming' => ['name' => '清明节主题', 'colors' => '#4caf50,#81c784'],
+                                'dragon' => ['name' => '端午节主题', 'colors' => '#e53935,#ff9800'],
+                                'qixi' => ['name' => '七夕节主题', 'colors' => '#e91e63,#9c27b0']
+                            ];
+                            
+                            $currentTheme = defined('THEME') ? THEME : 'default';
+                            ?>
+                            
+                            <div id="regularThemesContainer">
+                            <?php
+                            $themeCount = 0;
+                            foreach ($regularThemes as $key => $theme) {
+                                if ($key === 'custom') continue;
+                                $themeCount++;
+                                $isActive = $currentTheme === $key;
+                                $style = 'background: linear-gradient(135deg, ' . $theme['colors'] . ');';
+                                $isHidden = $themeCount > 10;
+                            ?>
+                            <div class="theme-option <?php echo $isActive ? 'selected' : ''; ?> <?php echo $isHidden ? 'hidden' : ''; ?>" data-theme="<?php echo $key; ?>" data-colors="<?php echo $theme['colors']; ?>" onclick="selectTheme(this)">
+                                <div class="theme-preview" style="<?php echo $style; ?>"></div>
+                                <div style="padding: 8px; text-align: center; font-size: 12px; font-weight: 500;"><?php echo $theme['name']; ?></div>
+                            </div>
+                            <?php } ?>
+                            </div>
+                            
+                            <?php if (count($regularThemes) > 11): ?>
+                            <div style="grid-column: 1 / -1; margin-top: 8px;">
+                                <button type="button" id="toggleThemesBtn" class="btn btn-secondary" style="width: 100%;" onclick="toggleAllThemes()">
+                                    <i class="fas fa-chevron-down mr-2"></i><span>展开全部</span>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <div style="grid-column: 1 / -1; margin-top: 16px; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                                <div style="background: #f7fafc; padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleHolidayThemes()">
+                                    <span style="font-weight: 500; color: #4a5568;">节日主题</span>
+                                    <i id="holidayThemeIcon" class="fas fa-chevron-down" style="color: #718096; transition: transform 0.3s;"></i>
+                                </div>
+                                <div id="holidayThemesContainer" style="display: none; padding: 12px;" class="theme-grid">
+                                    <?php foreach ($holidayThemes as $key => $theme) {
                                         $isActive = $currentTheme === $key;
                                         $style = 'background: linear-gradient(135deg, ' . $theme['colors'] . ');';
-                                        $isHidden = $themeCount > 10;
                                     ?>
-                                    <div class="theme-option relative cursor-pointer border-2 rounded-xl overflow-hidden <?php echo $isActive ? 'border-green-500' : 'border-gray-200'; ?> <?php echo $isHidden ? 'hidden' : ''; ?>" data-theme-key="<?php echo $key; ?>" onclick="document.getElementById('theme_<?php echo $key; ?>').checked = true; document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('border-green-500')); this.classList.add('border-green-500');">
-                                        <input type="radio" id="theme_<?php echo $key; ?>" name="theme" value="<?php echo $key; ?>" <?php echo $isActive ? 'checked' : ''; ?> class="hidden">
-                                        <div class="h-16" style="<?php echo $style; ?>"></div>
-                                        <div class="p-2 text-center text-sm font-medium"><?php echo $theme['name']; ?></div>
+                                    <div class="theme-option <?php echo $isActive ? 'selected' : ''; ?>" data-theme="<?php echo $key; ?>" data-colors="<?php echo $theme['colors']; ?>" onclick="selectTheme(this)">
+                                        <div class="theme-preview" style="<?php echo $style; ?>"></div>
+                                        <div style="padding: 8px; text-align: center; font-size: 12px; font-weight: 500;"><?php echo $theme['name']; ?></div>
                                     </div>
-                                    <?php }
-                                    ?>
-                                </div>
-                                
-                                <!-- 自定义主题 -->
-                                <div class="theme-option relative cursor-pointer border-2 rounded-xl overflow-hidden <?php echo $currentTheme === 'custom' ? 'border-green-500' : 'border-gray-200'; ?>" onclick="document.getElementById('theme_custom').checked = true; document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('border-green-500')); this.classList.add('border-green-500');">
-                                    <input type="radio" id="theme_custom" name="theme" value="custom" <?php echo $currentTheme === 'custom' ? 'checked' : ''; ?> class="hidden">
-                                    <div class="h-16"></div>
-                                    <div class="p-2 text-center text-sm font-medium">自定义主题</div>
-                                </div>
-                                
-                                <!-- 展开/收起按钮 -->
-                                <?php if ($totalThemes > 10): ?>
-                                <div class="col-span-full mt-2">
-                                    <button type="button" id="toggleThemesBtn" class="w-full py-2 text-sm text-blue-600 hover:text-blue-700 transition flex items-center justify-center gap-2">
-                                        <i class="fas fa-chevron-down"></i>
-                                        <span>展开全部</span>
-                                    </button>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <!-- 节日主题收纳条 -->
-                                <div class="col-span-full mt-4">
-                                    <div class="border-2 border-gray-200 rounded-xl overflow-hidden">
-                                        <div class="bg-gray-50 p-3 cursor-pointer flex justify-between items-center" onclick="toggleHolidayThemes()">
-                                            <h4 class="font-medium text-gray-700">节日主题</h4>
-                                            <i id="holidayThemeIcon" class="fas fa-chevron-down text-gray-500 transition-transform"></i>
-                                        </div>
-                                        <div id="holidayThemesContainer" class="hidden p-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                                            <?php foreach ($holidayThemes as $key => $theme) {
-                                                $isActive = $currentTheme === $key;
-                                                $style = 'background: linear-gradient(135deg, ' . $theme['colors'] . ');';
-                                            ?>
-                                            <div class="theme-option relative cursor-pointer border-2 rounded-xl overflow-hidden <?php echo $isActive ? 'border-green-500' : 'border-gray-200'; ?>" onclick="document.getElementById('theme_<?php echo $key; ?>').checked = true; document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('border-green-500')); this.classList.add('border-green-500');">
-                                                <input type="radio" id="theme_<?php echo $key; ?>" name="theme" value="<?php echo $key; ?>" <?php echo $isActive ? 'checked' : ''; ?> class="hidden">
-                                                <div class="h-16" style="<?php echo $style; ?>"></div>
-                                                <div class="p-2 text-center text-sm font-medium"><?php echo $theme['name']; ?></div>
-                                                <div class="absolute top-1 right-1 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-gray-600">
-                                                    节日
-                                                </div>
-                                                <button type="button" class="absolute bottom-1 right-1 bg-white/80 backdrop-blur-sm rounded-full p-1 text-xs text-blue-600 hover:bg-white hover:text-blue-700 transition" onclick="event.stopPropagation(); previewHolidayTheme('<?php echo $key; ?>', '<?php echo $theme['name']; ?>', '<?php echo $theme['colors']; ?>');">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            </div>
-                                            <?php }
-                                            ?>
-                                        </div>
-                                    </div>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>
-                        
-                        <script>
-                            function toggleHolidayThemes() {
-                                const container = document.getElementById('holidayThemesContainer');
-                                const icon = document.getElementById('holidayThemeIcon');
-                                container.classList.toggle('hidden');
-                                icon.classList.toggle('rotate-180');
-                            }
-                            
-                            // 展开/收起常规主题
-                            document.getElementById('toggleThemesBtn')?.addEventListener('click', function() {
-                                const hiddenThemes = document.querySelectorAll('#regularThemesContainer .theme-option.hidden');
-                                const isExpanded = hiddenThemes.length === 0;
-                                
-                                if (isExpanded) {
-                                    // 收起
-                                    let count = 0;
-                                    document.querySelectorAll('#regularThemesContainer .theme-option').forEach(theme => {
-                                        count++;
-                                        if (count > 10) {
-                                            theme.classList.add('hidden');
-                                        }
-                                    });
-                                    this.innerHTML = '<i class="fas fa-chevron-down"></i><span>展开全部</span>';
-                                } else {
-                                    // 展开
-                                    hiddenThemes.forEach(theme => {
-                                        theme.classList.remove('hidden');
-                                    });
-                                    this.innerHTML = '<i class="fas fa-chevron-up"></i><span>收起</span>';
-                                }
-                            });
-                            
-                            function previewHolidayTheme(themeKey, themeName, themeColors) {
-                                // 创建预览模态框
-                                const modal = document.createElement('div');
-                                modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
-                                modal.onclick = function(e) {
-                                    if (e.target === modal) {
-                                        modal.remove();
-                                    }
-                                };
-                                
-                                // 预览内容
-                                const previewContent = document.createElement('div');
-                                previewContent.className = 'bg-white rounded-2xl p-6 max-w-md w-full mx-4';
-                                previewContent.onclick = function(e) {
-                                    e.stopPropagation();
-                                };
-                                
-                                // 主题效果预览
-                                const themePreview = document.createElement('div');
-                                themePreview.className = 'rounded-xl overflow-hidden mb-4';
-                                themePreview.style.height = '200px';
-                                themePreview.style.background = `linear-gradient(135deg, ${themeColors})`;
-                                
-                                // 添加节日效果
-                                let holidayEffect = '';
-                                switch (themeKey) {
-                                    case 'spring':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 20% 20%, rgba(255, 179, 0, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 80% 20%, rgba(255, 179, 0, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 20% 80%, rgba(255, 179, 0, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 80% 80%, rgba(255, 179, 0, 0.4) 0%, transparent 15%);
-                                                animation: lanterns 4s ease-in-out infinite;
-                                            "></div>
-                                            <style>
-                                                @keyframes lanterns {
-                                                    0%, 100% { transform: translateY(0px); }
-                                                    50% { transform: translateY(-10px); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'christmas':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 30% 10%, rgba(255, 255, 255, 0.8) 0%, transparent 5%),
-                                                radial-gradient(circle at 70% 15%, rgba(255, 255, 255, 0.6) 0%, transparent 4%),
-                                                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.7) 0%, transparent 3%);
-                                                animation: snow 10s linear infinite;
-                                            "></div>
-                                            <style>
-                                                @keyframes snow {
-                                                    0% { transform: translateY(-100%); }
-                                                    100% { transform: translateY(100%); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'valentine':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 25% 25%, rgba(233, 30, 99, 0.3) 0%, transparent 15%),
-                                                radial-gradient(circle at 75% 25%, rgba(233, 30, 99, 0.3) 0%, transparent 15%),
-                                                radial-gradient(circle at 25% 75%, rgba(233, 30, 99, 0.3) 0%, transparent 15%);
-                                                animation: hearts 3s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes hearts {
-                                                    0%, 100% { transform: scale(1); opacity: 0.8; }
-                                                    50% { transform: scale(1.1); opacity: 1; }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'midautumn':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 10%; right: 10%; width: 80px; height: 80px; background: radial-gradient(circle, rgba(255, 255, 224, 0.9) 0%, rgba(255, 255, 153, 0.7) 70%, transparent 100%); border-radius: 50%; box-shadow: 0 0 50px rgba(255, 255, 153, 0.6); animation: moon 20s linear infinite;"></div>
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 30% 30%, rgba(255, 255, 153, 0.2) 0%, transparent 10%),
-                                                radial-gradient(circle at 70% 30%, rgba(255, 255, 153, 0.2) 0%, transparent 10%);
-                                                animation: twinkling 3s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes moon {
-                                                    0% { transform: rotate(0deg); }
-                                                    100% { transform: rotate(360deg); }
-                                                }
-                                                @keyframes twinkling {
-                                                    0%, 100% { opacity: 0.3; }
-                                                    50% { opacity: 0.8; }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'mayday':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.4) 0%, transparent 20%),
-                                                radial-gradient(circle at 80% 30%, rgba(76, 175, 80, 0.4) 0%, transparent 20%);
-                                                animation: leaves 6s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes leaves {
-                                                    0%, 100% { transform: rotate(0deg); }
-                                                    50% { transform: rotate(5deg); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'children':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 15% 15%, rgba(255, 152, 0, 0.4) 0%, transparent 12%),
-                                                radial-gradient(circle at 85% 15%, rgba(255, 152, 0, 0.4) 0%, transparent 12%),
-                                                radial-gradient(circle at 15% 85%, rgba(255, 152, 0, 0.4) 0%, transparent 12%);
-                                                animation: balloons 5s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes balloons {
-                                                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                                                    25% { transform: translateY(-10px) rotate(5deg); }
-                                                    50% { transform: translateY(-5px) rotate(0deg); }
-                                                    75% { transform: translateY(-10px) rotate(-5deg); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'national':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 25% 25%, rgba(229, 57, 53, 0.3) 0%, transparent 15%),
-                                                radial-gradient(circle at 75% 25%, rgba(229, 57, 53, 0.3) 0%, transparent 15%),
-                                                radial-gradient(circle at 25% 75%, rgba(229, 57, 53, 0.3) 0%, transparent 15%);
-                                                animation: fireworks 2s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes fireworks {
-                                                    0%, 100% { opacity: 0.3; }
-                                                    50% { opacity: 0.8; }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'qingming':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 80% 30%, rgba(76, 175, 80, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 50% 70%, rgba(76, 175, 80, 0.4) 0%, transparent 15%);
-                                                animation: leaves 6s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes leaves {
-                                                    0%, 100% { transform: rotate(0deg); }
-                                                    50% { transform: rotate(5deg); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'dragon':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 25% 25%, rgba(229, 57, 53, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 75% 25%, rgba(229, 57, 53, 0.4) 0%, transparent 15%),
-                                                radial-gradient(circle at 25% 75%, rgba(229, 57, 53, 0.4) 0%, transparent 15%);
-                                                animation: dragonDance 4s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes dragonDance {
-                                                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                                                    25% { transform: translateY(-10px) rotate(2deg); }
-                                                    50% { transform: translateY(-5px) rotate(0deg); }
-                                                    75% { transform: translateY(-10px) rotate(-2deg); }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                    case 'qixi':
-                                        holidayEffect = `
-                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: 
-                                                radial-gradient(circle at 20% 20%, rgba(233, 30, 99, 0.3) 0%, transparent 12%),
-                                                radial-gradient(circle at 80% 20%, rgba(233, 30, 99, 0.3) 0%, transparent 12%),
-                                                radial-gradient(circle at 20% 80%, rgba(233, 30, 99, 0.3) 0%, transparent 12%);
-                                                animation: stars 3s ease-in-out infinite;
-                                            </div>
-                                            <style>
-                                                @keyframes stars {
-                                                    0%, 100% { transform: scale(1); opacity: 0.7; }
-                                                    50% { transform: scale(1.1); opacity: 1; }
-                                                }
-                                            </style>
-                                        `;
-                                        break;
-                                }
-                                
-                                themePreview.style.position = 'relative';
-                                themePreview.innerHTML = holidayEffect;
-                                
-                                // 主题信息
-                                const themeInfo = document.createElement('div');
-                                themeInfo.className = 'space-y-2';
-                                themeInfo.innerHTML = `
-                                    <h3 class="text-lg font-semibold text-gray-800">${themeName}预览</h3>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-sm text-gray-600">主题颜色:</span>
-                                        <div class="flex gap-2">
-                                            ${themeColors.split(',').map(color => `<div class="w-6 h-6 rounded-full" style="background-color: ${color}"></div>`).join('')}
-                                        </div>
-                                    </div>
-                                    <p class="text-sm text-gray-600">点击空白处关闭预览</p>
-                                `;
-                                
-                                // 关闭按钮
-                                const closeButton = document.createElement('button');
-                                closeButton.className = 'absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl';
-                                closeButton.innerHTML = '&times;';
-                                closeButton.onclick = function() {
-                                    modal.remove();
-                                };
-                                
-                                previewContent.appendChild(closeButton);
-                                previewContent.appendChild(themePreview);
-                                previewContent.appendChild(themeInfo);
-                                modal.appendChild(previewContent);
-                                document.body.appendChild(modal);
-                            }
-                        </script>
-                        
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">自定义颜色</label>
-                            <div class="flex gap-4">
-                                <div class="flex-1">
-                                    <label class="block text-sm text-gray-500 mb-1">主色</label>
-                                    <input type="color" name="custom_colors" value="<?php echo defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a'; ?>" class="w-full h-10 rounded-lg cursor-pointer">
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-sm text-gray-500 mb-1">辅色</label>
-                                    <input type="color" name="custom_colors2" value="<?php echo defined('CUSTOM_COLORS') ? (explode(',', CUSTOM_COLORS)[1] ?? '#42a5f5') : '#42a5f5'; ?>" class="w-full h-10 rounded-lg cursor-pointer">
-                                </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">自定义颜色（选择自定义主题后生效）</label>
+                        <div style="display: flex; gap: 16px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; color: #718096; margin-bottom: 4px; display: block;">主色</label>
+                                <input type="color" id="customColor1" value="<?php echo defined('CUSTOM_COLORS') ? explode(',', CUSTOM_COLORS)[0] : '#66bb6a'; ?>" class="form-input" style="height: 50px; padding: 4px; cursor: pointer;" onchange="updateCustomColors()">
                             </div>
-                            <input type="hidden" name="custom_colors" id="custom_colors_input" value="<?php echo defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5'; ?>">
+                            <div style="flex: 1;">
+                                <label style="font-size: 12px; color: #718096; margin-bottom: 4px; display: block;">辅色</label>
+                                <input type="color" id="customColor2" value="<?php echo defined('CUSTOM_COLORS') ? (explode(',', CUSTOM_COLORS)[1] ?? '#42a5f5') : '#42a5f5'; ?>" class="form-input" style="height: 50px; padding: 4px; cursor: pointer;" onchange="updateCustomColors()">
+                            </div>
                         </div>
-                        
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">自动切换设置</label>
-                            <select name="theme_auto_switch" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-                                <option value="off" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'off' ? 'selected' : ''; ?>>不切换</option>
-                                <option value="daily" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'daily' ? 'selected' : ''; ?>>每天切换</option>
-                                <option value="random" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'random' ? 'selected' : ''; ?>>随机切换</option>
-                            </select>
-                            <p class="text-sm text-gray-500 mt-2">每天切换：如果现用的是节日主题则不生效<br>随机切换：每个用户每次打开随机背景主题（不包括节日主题）</p>
-                        </div>
-                        
-                        <input type="hidden" name="update_theme" value="1">
-                        <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
-                            <i class="fas fa-save mr-2"></i>保存配置
-                        </button>
-                    </form>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">主题自动切换</label>
+                        <select name="theme_auto_switch" class="form-input">
+                            <option value="off" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'off' ? 'selected' : ''; ?>>不切换</option>
+                            <option value="daily" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'daily' ? 'selected' : ''; ?>>每天切换</option>
+                            <option value="random" <?php echo (defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off') === 'random' ? 'selected' : ''; ?>>每次随机</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="theme" id="selectedTheme" value="<?php echo defined('THEME') ? THEME : 'default'; ?>">
+                    <input type="hidden" name="custom_colors" id="customColors" value="<?php echo defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5'; ?>">
+                    <button type="submit" name="update_theme" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>保存主题
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 纯净模式配置 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt text-red-500"></i>
+                    纯净模式
                 </div>
-                
-                <!-- 纯净模式配置 -->
-                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg max-w-2xl">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-green-500"></i>纯净模式</h3>
-                    <form method="POST">
-                        <div class="mb-6">
-                            <label class="flex items-center justify-between">
-                                <span class="text-gray-700">开启纯净模式</span>
-                                <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
-                                    <input type="checkbox" name="pure_mode" <?php echo defined('PURE_MODE') && PURE_MODE ? 'checked' : ''; ?> class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in-out" id="pure_mode_toggle">
-                                    <label for="pure_mode_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out"></label>
-                                </div>
-                            </label>
-                            <p class="text-sm text-gray-500 mt-2">开启后将拦截包含敏感词的帖子</p>
+                <form method="POST">
+                    <div class="form-group">
+                        <label class="form-label">开启纯净模式</label>
+                        <div class="toggle-switch <?php echo defined('PURE_MODE') && PURE_MODE ? 'active' : ''; ?>" onclick="toggleSwitch(this)">
+                            <input type="checkbox" name="pure_mode" value="1" <?php echo defined('PURE_MODE') && PURE_MODE ? 'checked' : ''; ?> style="display: none;">
                         </div>
-                        
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">敏感词</label>
-                            <textarea name="sensitive_words" id="sensitive_words" placeholder="请输入敏感词，用空格分隔" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition" rows="3"><?php echo defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : ''; ?></textarea>
-                            <div class="flex gap-2 mt-2">
-                                <button type="button" onclick="useCloudSensitiveWords()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
-                                    <i class="fas fa-cloud-download-alt mr-1"></i>使用云端词库
-                                </button>
-                                <p class="text-sm text-gray-500">多个敏感词用空格分隔</p>
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" name="update_pure_mode" value="1">
-                        <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
-                            <i class="fas fa-save mr-2"></i>保存配置
-                        </button>
-                    </form>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">敏感词（空格分隔）</label>
+                        <textarea name="sensitive_words" class="form-textarea"><?php echo defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : ''; ?></textarea>
+                    </div>
+                    <button type="button" onclick="useCloudSensitiveWords()" class="btn btn-secondary mr-2">
+                        <i class="fas fa-cloud-download-alt mr-2"></i>使用云端词库
+                    </button>
+                    <button type="submit" name="update_pure_mode" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>保存配置
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 背景音乐配置 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-music text-blue-500"></i>
+                    背景音乐
                 </div>
-                
-                <style>
-                    .toggle-checkbox:checked {
-                        right: 0;
-                        border-color: #66bb6a;
-                    }
-                    .toggle-checkbox:checked + .toggle-label {
-                        background-color: #66bb6a;
-                    }
-                    .toggle-checkbox {
-                        right: 6px;
-                        top: 6px;
-                    }
-                </style>
-                
-                <!-- 背景音乐配置 -->
-                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg max-w-2xl mt-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-music mr-2 text-purple-500"></i>背景音乐</h3>
-                    <form method="POST" enctype="multipart/form-data">
-                        <div class="mb-6">
-                            <label class="flex items-center justify-between">
-                                <span class="text-gray-700">启用背景音乐</span>
-                                <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
-                                    <input type="checkbox" name="bg_music_enabled" <?php echo defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED ? 'checked' : ''; ?> class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in-out" id="bg_music_toggle">
-                                    <label for="bg_music_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200 ease-in-out"></label>
-                                </div>
-                            </label>
-                            <p class="text-sm text-gray-500 mt-2">开启后首页会自动播放背景音乐</p>
+                <form method="POST" enctype="multipart/form-data" id="musicForm">
+                    <div class="form-group">
+                        <label class="form-label">开启背景音乐</label>
+                        <div class="toggle-switch <?php echo defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED ? 'active' : ''; ?>" onclick="toggleSwitch(this)">
+                            <input type="checkbox" name="bg_music_enabled" value="1" <?php echo defined('BG_MUSIC_ENABLED') && BG_MUSIC_ENABLED ? 'checked' : ''; ?> style="display: none;">
                         </div>
-                        
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">上传音乐文件</label>
-                            <input type="file" name="bg_music_file" accept="audio/*" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition" onchange="uploadMusic(this)">
-                            
-                            <!-- 上传进度条 -->
-                            <div id="uploadProgress" class="mt-2 hidden">
-                                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                    <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full" style="width: 0%"></div>
-                                </div>
-                                <p id="uploadStatus" class="mt-1 text-sm text-gray-600">准备上传...</p>
-                            </div>
-                            
-                            <!-- 已上传音乐管理 -->
-                            <?php if (defined('BG_MUSIC_FILE') && BG_MUSIC_FILE): ?>
-                                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="font-medium text-gray-800">当前音乐</p>
-                                            <p class="text-sm text-gray-600"><?php echo BG_MUSIC_FILE; ?></p>
-                                        </div>
-                                        <form method="POST" class="inline" onsubmit="return confirm('确定删除当前音乐吗？');">
-                                            <input type="hidden" name="delete_bg_music" value="1">
-                                            <button type="submit" class="text-red-500 hover:text-red-700">
-                                                <i class="fas fa-trash"></i> 删除
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">默认音量（0-100）</label>
+                        <input type="range" name="bg_music_volume" min="0" max="100" value="<?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>" class="form-input" style="padding: 0;">
+                        <div style="text-align: center; margin-top: 8px;">
+                            <span id="volumeValue"><?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>%</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">上传音乐文件</label>
+                        <input type="file" name="bg_music_file" accept="audio/*" class="form-input" onchange="uploadMusic(this)">
+                        <div class="progress-bar" id="musicProgress" style="display: none;">
+                            <div class="progress-fill" id="musicProgressFill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <?php if (defined('BG_MUSIC_FILE') && BG_MUSIC_FILE): ?>
+                    <div class="form-group">
+                        <label class="form-label">当前音乐</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-music text-blue-500"></i>
+                            <span><?php echo BG_MUSIC_FILE; ?></span>
+                            <button type="submit" name="delete_bg_music" class="btn btn-danger" style="padding: 8px 16px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <button type="submit" name="update_bg_music" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>保存配置
+                    </button>
+                </form>
+            </div>
+            
+        <?php elseif ($page === 'posts'): ?>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-list"></i>
+                    帖子管理
+                </h1>
+            </div>
+            
+            <?php foreach ($posts as $post): ?>
+            <div class="post-item">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <div style="color: #718096; font-size: 14px; margin-bottom: 8px;">
+                            <i class="fas fa-clock mr-2"></i><?php echo $post['created_at']; ?>
+                            <?php if ($post['topic']): ?>
+                            <span style="margin-left: 16px;"><i class="fas fa-tag mr-2"></i><?php echo htmlspecialchars($post['topic']); ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($post['is_pinned'])): ?>
+                            <span style="margin-left: 16px; color: #f59e0b;"><i class="fas fa-thumbtack mr-2"></i>已置顶</span>
                             <?php endif; ?>
                         </div>
-                        
-                        <div class="mb-6">
-                            <label class="block text-gray-700 mb-2">音量（默认50%）</label>
-                            <input type="range" name="bg_music_volume" min="0" max="100" value="<?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>0%</span>
-                                <span><?php echo defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50; ?>%</span>
-                                <span>100%</span>
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" name="update_bg_music" value="1">
-                        <button type="submit" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
-                            <i class="fas fa-save mr-2"></i>保存配置
-                        </button>
-                    </form>
-                </div>
-                
-                <style>
-                    .toggle-checkbox:checked {
-                        right: 0;
-                        border-color: #66bb6a;
-                    }
-                    .toggle-checkbox:checked + .toggle-label {
-                        background-color: #66bb6a;
-                    }
-                    .toggle-checkbox {
-                        right: 6px;
-                        top: 6px;
-                    }
-                </style>
-                
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const colorInputs = document.querySelectorAll('input[type="color"]');
-                        const customColorsInput = document.getElementById('custom_colors_input');
-                        
-                        function updateCustomColors() {
-                            const color1 = document.querySelector('input[name="custom_colors"]').value;
-                            const color2 = document.querySelector('input[name="custom_colors2"]').value;
-                            customColorsInput.value = color1 + ',' + color2;
-                        }
-                        
-                        colorInputs.forEach(input => {
-                            input.addEventListener('change', updateCustomColors);
-                        });
-                    });
-                    
-                    function useCloudSensitiveWords() {
-                        fetch('api.php?action=get_cloud_sensitive_words')
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    document.getElementById('sensitive_words').value = data.words;
-                                    alert('已成功获取云端词库');
-                                } else {
-                                    alert('获取云端词库失败：' + (data.error || '未知错误'));
-                                }
-                            })
-                            .catch(error => {
-                                alert('获取云端词库失败：网络错误');
-                            });
-                    }
-                    
-                    // 音乐上传进度条
-                    function uploadMusic(input) {
-                        const file = input.files[0];
-                        if (!file) return;
-                        
-                        const progressDiv = document.getElementById('uploadProgress');
-                        const progressBar = document.getElementById('progressBar');
-                        const status = document.getElementById('uploadStatus');
-                        
-                        progressDiv.classList.remove('hidden');
-                        status.textContent = '正在上传...';
-                        
-                        const formData = new FormData();
-                        formData.append('bg_music_file', file);
-                        formData.append('upload_bg_music', '1');
-                        
-                        const xhr = new XMLHttpRequest();
-                        
-                        xhr.upload.addEventListener('progress', function(e) {
-                            if (e.lengthComputable) {
-                                const percent = (e.loaded / e.total) * 100;
-                                progressBar.style.width = percent + '%';
-                                status.textContent = '上传中 ' + Math.round(percent) + '%';
-                            }
-                        });
-                        
-                        xhr.onload = function() {
-                            if (xhr.status === 200) {
-                                try {
-                                    const response = JSON.parse(xhr.responseText);
-                                    if (response.success) {
-                                        status.textContent = '上传成功！';
-                                        setTimeout(() => {
-                                            location.reload();
-                                        }, 1000);
-                                    } else {
-                                        status.textContent = '上传失败: ' + (response.error || '未知错误');
-                                    }
-                                } catch (e) {
-                                    status.textContent = '上传失败: 服务器响应错误';
-                                }
-                            } else {
-                                status.textContent = '上传失败: 网络错误';
-                            }
-                        };
-                        
-                        xhr.onerror = function() {
-                            status.textContent = '上传失败: 网络错误';
-                        };
-                        
-                        xhr.open('POST', 'api.php?action=upload_music');
-                        xhr.send(formData);
-                    }
-                </script>
-            <?php elseif ($page === 'posts'): ?>
-                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-list mr-2 text-purple-500"></i>帖子管理</h2>
-                <div class="space-y-4">
-                    <?php foreach ($posts as $post): ?>
-                        <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-800 mb-1"><?php echo htmlspecialchars($post['nickname']); ?> · <?php echo formatTime($post['created_at']); ?></div>
-                                    <p class="text-gray-600 mb-2"><?php echo htmlspecialchars(mb_substr($post['content'], 0, 100)); ?><?php echo mb_strlen($post['content']) > 100 ? '...' : ''; ?></p>
-                                </div>
-                                <div class="flex gap-2 ml-4">
-                                    <button onclick="toggleEdit(<?php echo $post['id']; ?>)" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <form method="POST" class="inline" onsubmit="return confirm('确定删除吗？');">
-                                        <input type="hidden" name="delete_post" value="<?php echo $post['id']; ?>">
-                                        <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 transition">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                            <div id="editForm<?php echo $post['id']; ?>" class="hidden mb-4">
-                                <form method="POST">
-                                    <textarea name="content" class="w-full px-4 py-3 border border-gray-200 rounded-xl mb-2" rows="3"><?php echo htmlspecialchars($post['content']); ?></textarea>
-                                    <input type="hidden" name="edit_post" value="<?php echo $post['id']; ?>">
-                                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm">保存</button>
-                                </form>
-                            </div>
-                            <?php 
-                            $comments = getComments($db, $post['id']);
-                            if ($comments): 
-                            ?>
-                                <div class="border-t border-gray-100 pt-4 mt-4">
-                                    <h4 class="font-medium text-gray-700 mb-3">评论 (<?php echo count($comments); ?>)</h4>
-                                    <div class="space-y-2">
-                                        <?php foreach ($comments as $comment): ?>
-                                            <div class="flex items-start justify-between bg-gray-50 p-3 rounded-lg">
-                                                <div class="flex-1">
-                                                    <span class="font-medium text-gray-700"><?php echo htmlspecialchars($comment['nickname']); ?></span>
-                                                    <span class="text-gray-400 text-sm ml-2"><?php echo formatTime($comment['created_at']); ?></span>
-                                                    <p class="text-gray-600 text-sm mt-1"><?php echo htmlspecialchars($comment['content']); ?></p>
-                                                </div>
-                                                <form method="POST" class="ml-3" onsubmit="return confirm('确定删除吗？');">
-                                                    <input type="hidden" name="delete_comment" value="<?php echo $comment['id']; ?>">
-                                                    <button type="submit" class="text-red-500 hover:text-red-700">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <script>
-                    function toggleEdit(id) {
-                        document.getElementById('editForm' + id).classList.toggle('hidden');
-                    }
-                </script>
-            <?php elseif ($page === 'about'): ?>
-                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-info-circle mr-2 text-blue-500"></i>关于系统</h2>
-                <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-8 shadow-lg max-w-2xl">
-                    <div class="text-center mb-8">
-                        <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent mb-4">
-                            clearlove表白墙
-                        </h1>
-                        <p class="text-gray-600 mb-6">仰望星辰工作室，夏日之瓜，出品</p>
-                        <div class="flex justify-center gap-4 mb-6">
-                            <a href="https://clearlove.kazx.top/" target="_blank" class="text-blue-600 hover:text-blue-800 transition flex items-center gap-2">
-                                <i class="fas fa-globe"></i>官网
-                            </a>
-                            <a href="https://github.com/FQH666666/clearlove-lovecards" target="_blank" class="text-gray-600 hover:text-gray-800 transition flex items-center gap-2">
-                                <i class="fab fa-github"></i>GitHub
-                            </a>
-                        </div>
-                        <p class="text-gray-500 mb-8">© 2026</p>
+                        <div style="color: #2d3748; line-height: 1.6;"><?php echo nl2br(htmlspecialchars($post['content'])); ?></div>
                     </div>
-                    
-                    <div class="border-t border-gray-200 pt-6 mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">版本信息</h3>
-                            <span class="text-blue-600 font-medium">v<?php echo APP_VERSION; ?></span>
-                        </div>
-                        <button onclick="checkUpdate()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                            <i class="fas fa-sync-alt"></i>检查更新
-                        </button>
-                    </div>
-                    
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                            <span class="text-red-600">♥</span> 捐赠开发者
-                        </h3>
-                        <button onclick="openDonateModal()" class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                            <i class="fas fa-heart"></i>捐赠支持
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 捐赠弹窗 -->
-                <div id="donateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-                    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold text-gray-800">感谢捐助</h3>
-                            <button onclick="closeDonateModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-                        </div>
-                        <p class="text-gray-700 mb-6 text-center">您的捐助会让项目走得更远</p>
-                        <div class="flex justify-center mb-6">
-                            <img src="https://clearlove.kazx.top/%E6%8D%90%E8%B5%A0.webp" alt="捐赠二维码" class="w-48 h-48 object-contain">
-                        </div>
-                        <button onclick="closeDonateModal()" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
-                            关闭
-                        </button>
-                    </div>
-                </div>
-                
-                <script>
-                    function openDonateModal() {
-                        document.getElementById('donateModal').classList.remove('hidden');
-                    }
-                    
-                    function closeDonateModal() {
-                        document.getElementById('donateModal').classList.add('hidden');
-                    }
-                    
-                    function checkUpdate() {
-                        fetch('api.php?action=check_update')
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    if (data.has_update) {
-                                        alert('发现新版本 v' + data.version + '\n\n更新说明:\n' + data.release_notes + '\n\n请前往官网下载更新');
-                                    } else {
-                                        alert('当前已是最新版本');
-                                    }
-                                } else {
-                                    alert('检查更新失败: ' + (data.error || '未知错误'));
-                                }
-                            })
-                            .catch(error => {
-                                alert('检查更新失败: 网络错误');
-                            });
-                    }
-                </script>
-            <?php elseif ($page === 'announcements'): ?>
-                <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-bullhorn mr-2 text-yellow-500"></i>公告与话题</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-bullhorn mr-2 text-yellow-500"></i>公告管理</h3>
-                        <form method="POST" enctype="multipart/form-data" class="mb-6">
-                            <textarea name="content" placeholder="公告内容" rows="3" required class="w-full px-4 py-3 border border-gray-200 rounded-xl mb-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"></textarea>
-                            <input type="file" name="image" accept="image/*" class="mb-3">
-                            <button type="submit" name="add_announcement" class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-2 rounded-xl font-medium hover:opacity-90 transition-opacity">
-                                添加公告
+                    <div style="display: flex; gap: 8px; margin-left: 16px;">
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="toggle_pin" value="<?php echo $post['id']; ?>">
+                            <button type="submit" class="btn <?php echo !empty($post['is_pinned']) ? 'btn-warning' : 'btn-secondary'; ?>" style="padding: 8px 16px;" title="<?php echo !empty($post['is_pinned']) ? '取消置顶' : '置顶'; ?>">
+                                <i class="fas fa-thumbtack"></i>
                             </button>
                         </form>
-                        <div class="space-y-3">
-                            <?php foreach ($announcements as $a): ?>
-                                <div class="bg-gray-50 p-4 rounded-xl">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="<?php echo $a['active'] ? 'text-green-600' : 'text-gray-400'; ?>">
-                                            <i class="fas <?php echo $a['active'] ? 'fa-check-circle' : 'fa-times-circle'; ?>"></i>
-                                            <?php echo $a['active'] ? '启用中' : '已禁用'; ?>
-                                        </span>
-                                        <div class="flex gap-2">
-                                            <button type="button" class="text-blue-500 hover:text-blue-700 text-sm" onclick="openEditAnnouncementModal(<?php echo $a['id']; ?>, '<?php echo addslashes($a['content']); ?>', '<?php echo $a['image']; ?>')">
-                                                编辑
-                                            </button>
-                                            <form method="POST" class="inline">
-                                                <input type="hidden" name="toggle_announcement" value="<?php echo $a['id']; ?>">
-                                                <button type="submit" class="text-blue-500 hover:text-blue-700 text-sm">
-                                                    <?php echo $a['active'] ? '禁用' : '启用'; ?>
-                                                </button>
-                                            </form>
-                                            <form method="POST" class="inline" onsubmit="return confirm('确定删除吗？');">
-                                                <input type="hidden" name="delete_announcement" value="<?php echo $a['id']; ?>">
-                                                <button type="submit" class="text-red-500 hover:text-red-700 text-sm">删除</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div class="text-gray-700 prose max-w-none"><?php echo $parsedown->text($a['content']); ?></div>
-                                    <?php if ($a['image']): ?>
-                                        <img src="uploads/<?php echo $a['image']; ?>" class="mt-2 w-32 h-32 object-cover rounded-lg">
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fas fa-hashtag mr-2 text-purple-500"></i>话题管理</h3>
-                        <form method="POST" class="mb-6">
-                            <div class="flex gap-2">
-                                <input type="text" name="topic_name" placeholder="话题名称" required class="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
-                                <button type="submit" name="add_topic" class="bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-600 transition">
-                                    添加
-                                </button>
-                            </div>
+                        <button onclick="editPost(<?php echo $post['id']; ?>, '<?php echo addslashes($post['content']); ?>')" class="btn btn-secondary" style="padding: 8px 16px;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这个帖子吗？')">
+                            <input type="hidden" name="delete_post" value="<?php echo $post['id']; ?>">
+                            <button type="submit" class="btn btn-danger" style="padding: 8px 16px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </form>
-                        <div class="space-y-2">
-                            <?php foreach ($topics as $t): ?>
-                                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
-                                    <span class="text-gray-700">#<?php echo htmlspecialchars($t['name']); ?></span>
-                                    <form method="POST" class="inline" onsubmit="return confirm('确定删除吗？');">
-                                        <input type="hidden" name="delete_topic" value="<?php echo $t['id']; ?>">
-                                        <button type="submit" class="text-red-500 hover:text-red-700">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            
+        <?php elseif ($page === 'about'): ?>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-info-circle"></i>
+                    关于系统
+                </h1>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; padding: 40px 0;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(102, 187, 106, 0.3);">
+                        <i class="fas fa-heart text-white text-3xl"></i>
+                    </div>
+                    <h2 style="font-size: 28px; font-weight: 700; color: #1a202c; margin-bottom: 16px;">ClearLove 表白墙</h2>
+                    <p style="color: #718096; margin-bottom: 24px;">仰望星辰工作室，夏日之瓜，出品</p>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <a href="https://clearlove.kazx.top/" target="_blank" class="btn btn-primary" style="margin-right: 12px;">
+                            <i class="fas fa-globe mr-2"></i>访问官网
+                        </a>
+                        <a href="https://github.com/FQH666666/clearlove-lovecards" target="_blank" class="btn btn-secondary">
+                            <i class="fab fa-github mr-2"></i>GitHub
+                        </a>
+                    </div>
+                    
+                    <div style="background: rgba(102, 187, 106, 0.1); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                        <p style="color: #4a5568; margin-bottom: 8px;">当前版本</p>
+                        <p style="font-size: 24px; font-weight: 700; color: #1a202c;">v<?php echo APP_VERSION; ?></p>
+                    </div>
+                    
+                    <button onclick="checkUpdate()" class="btn btn-primary" style="margin-bottom: 24px;">
+                        <i class="fas fa-sync-alt mr-2"></i>检查更新
+                    </button>
+                    
+                    <div style="margin-top: 32px;">
+                        <button onclick="showDonation()" class="btn btn-danger">
+                            <i class="fas fa-heart mr-2"></i>捐赠开发者
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        <?php elseif ($page === 'announcements'): ?>
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-bullhorn"></i>
+                    公告与话题
+                </h1>
+            </div>
+            
+            <!-- 添加公告 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle text-green-500"></i>
+                    添加公告
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">公告内容</label>
+                        <textarea name="content" class="form-textarea" placeholder="请输入公告内容（支持Markdown格式）"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">公告图片（可选）</label>
+                        <input type="file" name="image" accept="image/*" class="form-input">
+                    </div>
+                    <button type="submit" name="add_announcement" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i>添加公告
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 公告列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-list text-blue-500"></i>
+                    公告列表
+                </div>
+                <?php foreach ($announcements as $announcement): ?>
+                <div class="announcement-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <div style="color: #718096; font-size: 14px; margin-bottom: 8px;">
+                                <i class="fas fa-clock mr-2"></i><?php echo $announcement['created_at']; ?>
+                            </div>
+                            <div style="color: #2d3748; line-height: 1.6;"><?php echo $parsedown->text($announcement['content']); ?></div>
+                            <?php if ($announcement['image']): ?>
+                            <div style="margin-top: 12px;">
+                                <img src="uploads/<?php echo $announcement['image']; ?>" style="max-width: 200px; border-radius: 8px;">
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-left: 16px;">
+                            <form method="POST" style="display: inline;">
+                                <input type="hidden" name="toggle_announcement" value="<?php echo $announcement['id']; ?>">
+                                <button type="submit" class="btn <?php echo $announcement['active'] ? 'btn-primary' : 'btn-secondary'; ?>" style="padding: 8px 16px;">
+                                    <?php echo $announcement['active'] ? '已启用' : '已禁用'; ?>
+                                </button>
+                            </form>
+                            <button onclick="editAnnouncement(<?php echo $announcement['id']; ?>, '<?php echo addslashes($announcement['content']); ?>')" class="btn btn-secondary" style="padding: 8px 16px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这个公告吗？')">
+                                <input type="hidden" name="delete_announcement" value="<?php echo $announcement['id']; ?>">
+                                <button type="submit" class="btn btn-danger" style="padding: 8px 16px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
-        </main>
-    </div>
-
-    <!-- 更新提示弹窗 -->
-    <?php if (isset($updateInfo['has_update']) && $updateInfo['has_update']): ?>
-    <div id="updateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <div class="text-center mb-4">
-                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-arrow-up text-2xl text-blue-600"></i>
+                <?php endforeach; ?>
+            </div>
+            
+            <!-- 话题管理 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tags text-purple-500"></i>
+                    话题管理
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">发现新版本</h3>
-                <p class="text-gray-600 mt-2">版本：<?php echo $updateInfo['version']; ?></p>
-            </div>
-            <div class="mb-4">
-                <h4 class="font-medium text-gray-700 mb-2">更新说明：</h4>
-                <div class="bg-gray-50 p-3 rounded-lg text-gray-600 text-sm">
-                    <?php echo nl2br(htmlspecialchars($updateInfo['release_notes'])); ?>
+                <form method="POST" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" name="topic_name" placeholder="输入话题名称" class="form-input" style="flex: 1;">
+                        <button type="submit" name="add_topic" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>添加话题
+                        </button>
+                    </div>
+                </form>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                    <?php foreach ($topics as $topic): ?>
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(102, 187, 106, 0.1); padding: 8px 16px; border-radius: 20px;">
+                        <i class="fas fa-tag text-green-500"></i>
+                        <span><?php echo htmlspecialchars($topic['name']); ?></span>
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="delete_topic" value="<?php echo $topic['id']; ?>">
+                            <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('updateModal').remove()" class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                    暂不更新
-                </button>
-                <a href="<?php echo $updateInfo['download_url']; ?>" target="_blank" class="flex-1 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition">
-                    立即下载
-                </a>
-            </div>
-        </div>
-    </div>
-    <?php elseif (isset($updateInfo['error'])): ?>
-    <div id="updateErrorModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <div class="text-center mb-4">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+        <?php endif; ?>
+    </main>
+    
+    <!-- 编辑帖子弹窗 -->
+    <div class="modal" id="editPostModal">
+        <div class="modal-content">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 24px;">编辑帖子</h3>
+            <form method="POST">
+                <input type="hidden" name="edit_post" id="editPostId">
+                <div class="form-group">
+                    <label class="form-label">帖子内容</label>
+                    <textarea name="content" id="editPostContent" class="form-textarea"></textarea>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">加载版本失败</h3>
-                <p class="text-gray-600 mt-2">错误：<?php echo $updateInfo['error']; ?></p>
-            </div>
-            <button onclick="document.getElementById('updateErrorModal').remove()" class="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-700 text-white rounded-lg hover:opacity-90 transition">
-                确定
-            </button>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- 敏感词库更新提示 -->
-    <?php if (isset($_SESSION['words_updated']) && $_SESSION['words_updated']): ?>
-    <?php unset($_SESSION['words_updated']); ?>
-    <div id="wordsUpdateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-check-circle text-2xl text-green-600"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">敏感词库已自动更新</h3>
-        </div>
-    </div>
-    <script>
-        setTimeout(function() {
-            const modal = document.getElementById('wordsUpdateModal');
-            if (modal) {
-                modal.remove();
-            }
-        }, 2000);
-    </script>
-    <?php endif; ?>
-
-    <!-- 编辑公告弹窗 -->
-    <div id="editAnnouncementModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">编辑公告</h3>
-                <button onclick="closeEditAnnouncementModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-            <form method="POST" enctype="multipart/form-data">
-                <input type="hidden" id="edit_announcement_id" name="edit_announcement_id">
-                <textarea id="edit_announcement_content" name="edit_announcement_content" placeholder="公告内容" rows="3" required class="w-full px-4 py-3 border border-gray-200 rounded-xl mb-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"></textarea>
-                <input type="file" name="edit_announcement_image" accept="image/*" class="mb-3">
-                <div id="edit_announcement_image_preview" class="mb-3"></div>
-                <div class="flex gap-4">
-                    <button type="button" onclick="closeEditAnnouncementModal()" class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                        取消
-                    </button>
-                    <button type="submit" name="update_announcement" class="flex-1 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:opacity-90 transition">
-                        保存
-                    </button>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" onclick="closeModal('editPostModal')" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
         </div>
     </div>
-
+    
+    <!-- 编辑公告弹窗 -->
+    <div class="modal" id="editAnnouncementModal">
+        <div class="modal-content">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 24px;">编辑公告</h3>
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="update_announcement" value="1">
+                <input type="hidden" name="edit_announcement_id" id="editAnnouncementId">
+                <div class="form-group">
+                    <label class="form-label">公告内容</label>
+                    <textarea name="edit_announcement_content" id="editAnnouncementContent" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">公告图片（可选）</label>
+                    <input type="file" name="edit_announcement_image" accept="image/*" class="form-input">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" onclick="closeModal('editAnnouncementModal')" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 捐赠弹窗 -->
+    <div class="modal" id="donationModal">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">感谢捐助</h3>
+            <p style="color: #718096; margin-bottom: 24px;">您的捐助会让项目走得更远</p>
+            <img src="https://clearlove.kazx.top/%E6%8D%90%E8%B5%A0.webp" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px;">
+            <button onclick="closeModal('donationModal')" class="btn btn-primary">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 更新提示弹窗 -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">发现新版本</h3>
+            <div id="updateContent" style="margin-bottom: 24px;"></div>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeModal('updateModal')" class="btn btn-secondary">稍后更新</button>
+                <a id="updateLink" href="#" target="_blank" class="btn btn-primary">立即下载</a>
+            </div>
+        </div>
+    </div>
+    
     <!-- 云控公告弹窗 -->
     <?php if (is_array($cloudAnnouncements) && !isset($cloudAnnouncements['error']) && !empty($cloudAnnouncements)): ?>
     <?php foreach ($cloudAnnouncements as $announcement): ?>
     <?php if (!isset($_COOKIE['cloud_announcement_seen_' . $announcement['id']])): ?>
     <div id="cloudAnnouncementModal_<?php echo $announcement['id']; ?>" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4" style="animation: slideUp 0.3s ease;">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800"><?php echo htmlspecialchars($announcement['title']); ?></h3>
-                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, true)" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                <h3 style="font-size: 20px; font-weight: 600; color: #1a202c;"><?php echo htmlspecialchars($announcement['title']); ?></h3>
+                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, true)" style="color: #718096; font-size: 24px; background: none; border: none; cursor: pointer;">&times;</button>
             </div>
-            <div class="mb-4 prose max-w-none text-gray-700">
+            <div style="margin-bottom: 16px; color: #4a5568;">
                 <?php echo $parsedown->text($announcement['content']); ?>
             </div>
-            <div class="flex gap-4">
-                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, true)" class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            <div style="display: flex; gap: 16px;">
+                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, true)" style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; color: #4a5568; background: white; cursor: pointer;">
                     今天不再显示
                 </button>
-                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, false)" class="flex-1 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition">
+                <button onclick="closeCloudAnnouncement(<?php echo $announcement['id']; ?>, false)" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #66bb6a, #42a5f5); color: white; border: none; border-radius: 8px; cursor: pointer;">
                     我知道了
                 </button>
             </div>
@@ -1677,8 +1696,343 @@ $fileTypes = $storage['fileTypes'];
     <?php endif; ?>
     <?php endforeach; ?>
     <?php endif; ?>
-
+    
+    <!-- 公告弹窗 -->
+    <div class="modal" id="announcementModal">
+        <div class="modal-content">
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">公告</h3>
+            <div id="announcementContent" style="margin-bottom: 24px;"></div>
+            <button onclick="closeAnnouncementModal()" class="btn btn-primary">知道了</button>
+        </div>
+    </div>
+    
     <script>
+        // Toggle Switch函数
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            var checkbox = element.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        }
+        
+        // 页面加载动画控制
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('pageLoader').classList.remove('active');
+        });
+        
+        // 导航链接点击时显示加载动画
+        document.querySelectorAll('.nav-item').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                if (!this.classList.contains('logout')) {
+                    document.getElementById('pageLoader').classList.add('active');
+                }
+            });
+        });
+        
+        // 主题选择
+        function selectTheme(element) {
+            document.querySelectorAll('.theme-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('selectedTheme').value = element.dataset.theme;
+            document.getElementById('customColors').value = element.dataset.colors;
+        }
+        
+        // 展开/收起全部主题
+        function toggleAllThemes() {
+            const hiddenThemes = document.querySelectorAll('#regularThemesContainer .theme-option.hidden');
+            const btn = document.getElementById('toggleThemesBtn');
+            const isExpanded = hiddenThemes.length === 0;
+            
+            if (isExpanded) {
+                let count = 0;
+                document.querySelectorAll('#regularThemesContainer .theme-option').forEach(theme => {
+                    count++;
+                    if (count > 10) {
+                        theme.classList.add('hidden');
+                    }
+                });
+                btn.innerHTML = '<i class="fas fa-chevron-down mr-2"></i><span>展开全部</span>';
+            } else {
+                hiddenThemes.forEach(theme => {
+                    theme.classList.remove('hidden');
+                });
+                btn.innerHTML = '<i class="fas fa-chevron-up mr-2"></i><span>收起</span>';
+            }
+        }
+        
+        // 展开/收起节日主题
+        function toggleHolidayThemes() {
+            const container = document.getElementById('holidayThemesContainer');
+            const icon = document.getElementById('holidayThemeIcon');
+            if (container.style.display === 'none' || container.style.display === '') {
+                container.style.display = 'grid';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                container.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // 更新自定义颜色
+        function updateCustomColors() {
+            const color1 = document.getElementById('customColor1').value;
+            const color2 = document.getElementById('customColor2').value;
+            document.getElementById('customColors').value = color1 + ',' + color2;
+        }
+        
+        // 移动端侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            const menuIcon = document.getElementById('menuIcon');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+            
+            if (sidebar.classList.contains('open')) {
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+            } else {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+            }
+        }
+        
+        // 编辑帖子
+        function editPost(id, content) {
+            document.getElementById('editPostId').value = id;
+            document.getElementById('editPostContent').value = content;
+            document.getElementById('editPostModal').classList.add('active');
+        }
+        
+        // 编辑公告
+        function editAnnouncement(id, content) {
+            document.getElementById('editAnnouncementId').value = id;
+            document.getElementById('editAnnouncementContent').value = content;
+            document.getElementById('editAnnouncementModal').classList.add('active');
+        }
+        
+        // 关闭弹窗
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // 显示捐赠弹窗
+        function showDonation() {
+            document.getElementById('donationModal').classList.add('active');
+        }
+        
+        // 检查更新
+        function checkUpdate() {
+            fetch('api.php?action=check_update')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.has_update) {
+                            document.getElementById('updateContent').innerHTML = 
+                                '<p style="margin-bottom: 12px;"><strong>新版本：</strong>v' + data.version + '</p>' +
+                                '<p style="margin-bottom: 12px;"><strong>更新说明：</strong></p>' +
+                                '<p style="color: #718096;">' + data.release_notes + '</p>';
+                            document.getElementById('updateLink').href = data.download_url;
+                            document.getElementById('updateModal').classList.add('active');
+                        } else {
+                            alert('当前已是最新版本');
+                        }
+                    } else {
+                        alert('检查更新失败: ' + (data.error || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    alert('检查更新失败: 网络错误');
+                });
+        }
+        
+        // 使用云端词库
+        function useCloudSensitiveWords() {
+            fetch('api.php?action=get_cloud_sensitive_words')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector('textarea[name="sensitive_words"]').value = data.words;
+                        alert('云端词库已加载');
+                    } else {
+                        alert('获取云端词库失败: ' + (data.error || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    alert('获取云端词库失败: 网络错误');
+                });
+        }
+        
+        // 上传音乐
+        function uploadMusic(input) {
+            if (input.files && input.files[0]) {
+                const formData = new FormData();
+                formData.append('bg_music_file', input.files[0]);
+                
+                const progressBar = document.getElementById('musicProgress');
+                const progressFill = document.getElementById('musicProgressFill');
+                progressBar.style.display = 'block';
+                
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressFill.style.width = percent + '%';
+                    }
+                });
+                
+                xhr.addEventListener('load', function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            alert('音乐上传成功！请点击"保存配置"按钮以应用更改。');
+                            location.reload();
+                        } else {
+                            alert('音乐上传失败: ' + (response.error || '未知错误'));
+                        }
+                    } else {
+                        alert('音乐上传失败');
+                    }
+                    progressBar.style.display = 'none';
+                    progressFill.style.width = '0%';
+                });
+                
+                xhr.open('POST', 'api.php?action=upload_music');
+                xhr.send(formData);
+            }
+        }
+        
+        // 音量滑块
+        document.querySelector('input[name="bg_music_volume"]')?.addEventListener('input', function() {
+            document.getElementById('volumeValue').textContent = this.value + '%';
+        });
+        
+        // 关闭公告弹窗
+        function closeAnnouncementModal() {
+            document.getElementById('announcementModal').classList.remove('active');
+            const today = new Date().toDateString();
+            localStorage.setItem('announcementDismissed', today);
+        }
+        
+        // 访问统计图表
+        <?php if ($page === 'dashboard'): ?>
+        const ctx = document.getElementById('visitChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['6天前', '5天前', '4天前', '3天前', '2天前', '昨天', '今天'],
+                datasets: [{
+                    label: '访问IP数',
+                    data: <?php echo json_encode($visitStats['daily']); ?>,
+                    borderColor: '#66bb6a',
+                    backgroundColor: 'rgba(102, 187, 106, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#66bb6a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 文件类型占用图表
+        const storageCtx = document.getElementById('storageChart').getContext('2d');
+        
+        <?php
+        $labels = [];
+        $data = [];
+        $backgroundColors = [
+            '#66bb6a', '#42a5f5', '#ec407a', '#7e57c2', '#ffa726',
+            '#ef5350', '#26c6da', '#ffca28', '#3f51b5', '#5e35b1',
+            '#29b6f6', '#cddc39', '#00bcd4', '#66bb6a', '#9c27b0',
+            '#e53935', '#4caf50', '#ff9800', '#1e88e5', '#7b1fa2'
+        ];
+        $colors = [];
+        
+        arsort($fileTypes);
+        
+        $topTypes = array_slice($fileTypes, 0, 9);
+        $otherSize = array_sum(array_slice($fileTypes, 9));
+        
+        if ($otherSize > 0) {
+            $topTypes['其他'] = $otherSize;
+        }
+        
+        foreach ($topTypes as $extension => $size) {
+            $labels[] = $extension ?: '无扩展名';
+            $data[] = $size;
+            $colors[] = current($backgroundColors);
+            next($backgroundColors);
+        }
+        
+        $labelsJson = json_encode($labels);
+        $dataJson = json_encode($data);
+        $colorsJson = json_encode($colors);
+        ?>
+        
+        new Chart(storageCtx, {
+            type: 'pie',
+            data: {
+                labels: <?php echo $labelsJson; ?>,
+                datasets: [{
+                    data: <?php echo $dataJson; ?>,
+                    backgroundColor: <?php echo $colorsJson; ?>,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return label + ': ' + (value / 1024 / 1024).toFixed(2) + ' MB (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        <?php endif; ?>
+        
+        // 关闭云控公告
         function closeCloudAnnouncement(id, noShowToday) {
             const modal = document.getElementById('cloudAnnouncementModal_' + id);
             if (modal) {
@@ -1689,22 +2043,25 @@ $fileTypes = $storage['fileTypes'];
             }
         }
         
-        // 编辑公告相关脚本
-        function openEditAnnouncementModal(id, content, image) {
-            document.getElementById('edit_announcement_id').value = id;
-            document.getElementById('edit_announcement_content').value = content;
-            const previewDiv = document.getElementById('edit_announcement_image_preview');
-            if (image) {
-                previewDiv.innerHTML = '<img src="uploads/' + image + '" class="w-32 h-32 object-cover rounded-lg">';
-            } else {
-                previewDiv.innerHTML = '';
-            }
-            document.getElementById('editAnnouncementModal').classList.remove('hidden');
-        }
+        // 显示敏感词库更新提示
+        <?php if (isset($_SESSION['words_updated'])): ?>
+        setTimeout(function() {
+            alert('敏感词库已自动更新');
+            <?php unset($_SESSION['words_updated']); ?>
+        }, 500);
+        <?php endif; ?>
         
-        function closeEditAnnouncementModal() {
-            document.getElementById('editAnnouncementModal').classList.add('hidden');
-        }
+        // 显示版本更新提示
+        <?php if (isset($updateInfo['has_update']) && $updateInfo['has_update']): ?>
+        setTimeout(function() {
+            document.getElementById('updateContent').innerHTML = 
+                '<p style="margin-bottom: 12px;"><strong>新版本：</strong>v<?php echo $updateInfo['version']; ?></p>' +
+                '<p style="margin-bottom: 12px;"><strong>更新说明：</strong></p>' +
+                '<p style="color: #718096;"><?php echo addslashes($updateInfo['release_notes']); ?></p>';
+            document.getElementById('updateLink').href = '<?php echo $updateInfo['download_url']; ?>';
+            document.getElementById('updateModal').classList.add('active');
+        }, 1000);
+        <?php endif; ?>
     </script>
-    </body>
+</body>
 </html>

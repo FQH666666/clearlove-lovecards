@@ -18,8 +18,13 @@ recordVisit($db);
 $search = trim($_GET['search'] ?? '');
 if ($search) {
     $searchTerm = $db->quote('%' . $search . '%');
-    $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
-                          FROM posts p WHERE p.content LIKE $searchTerm OR p.topic LIKE $searchTerm ORDER BY p.created_at DESC LIMIT 50");
+    try {
+        $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
+                              FROM posts p WHERE p.content LIKE $searchTerm OR p.topic LIKE $searchTerm ORDER BY p.is_pinned DESC, p.created_at DESC LIMIT 50");
+    } catch (PDOException $e) {
+        $stmt = $db->query("SELECT p.*, (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count 
+                              FROM posts p WHERE p.content LIKE $searchTerm OR p.topic LIKE $searchTerm ORDER BY p.created_at DESC LIMIT 50");
+    }
     $posts = $stmt->fetchAll();
 } else {
     $posts = getPosts($db);
@@ -623,13 +628,21 @@ $parsedown = new Parsedown();
             <div class="space-y-6">
                 <?php foreach ($posts as $post): ?>
                     <div class="post-card rounded-2xl p-6" data-post-id="<?php echo $post['id']; ?>" onclick="goToDetail(<?php echo $post['id']; ?>)">
+                        <?php if (!empty($post['is_pinned'])): ?>
+                            <div class="mb-4 flex items-center gap-2 text-amber-600">
+                                <i class="fas fa-thumbtack text-lg"></i>
+                                <span class="text-sm font-semibold">置顶</span>
+                            </div>
+                        <?php endif; ?>
                         <div class="flex items-center mb-4">
                             <?php $avatarColor = getRandomColor($post['id']); ?>
                             <div class="avatar mr-3" style="background: <?php echo $avatarColor; ?>;">
                                 <?php echo mb_substr($post['nickname'], 0, 1); ?>
                             </div>
                             <div class="flex-1">
-                                <div class="font-semibold text-gray-800"><?php echo htmlspecialchars($post['nickname']); ?></div>
+                                <div class="font-semibold text-gray-800">
+                                    <?php echo htmlspecialchars($post['nickname']); ?>
+                                </div>
                                 <div class="text-sm text-gray-500"><?php echo formatTime($post['created_at']); ?></div>
                             </div>
                         </div>

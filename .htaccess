@@ -1,0 +1,8 @@
+# 基础安全保护
+Options -Indexes
+
+# 禁止访问敏感文件
+<FilesMatch "(\.env\.php|config\.php|functions\.php|Parsedown\.php)">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

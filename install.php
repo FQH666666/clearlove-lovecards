@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS posts (
     topic VARCHAR(100),
     media TEXT,
     likes INT DEFAULT 0,
+    is_pinned TINYINT(1) DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -140,6 +141,7 @@ CREATE TABLE IF NOT EXISTS posts (
     topic TEXT,
     media TEXT,
     likes INTEGER DEFAULT 0,
+    is_pinned INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

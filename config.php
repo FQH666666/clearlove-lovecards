@@ -21,7 +21,7 @@ if (!defined('DB_TYPE')) {
 // 云控中心配置
 define('CLOUD_CONTROL_URL', 'https://clearlove.kazx.top/yun.php');
 define('ENCRYPTION_KEY', 'your_encryption_key_here');
-define('APP_VERSION', '1.3.1');
+define('APP_VERSION', '1.3.3');
 
 define('UPLOAD_DIR', __DIR__ . '/uploads');
 define('MAX_MEDIA', 8);
