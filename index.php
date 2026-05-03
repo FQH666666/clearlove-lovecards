@@ -5,6 +5,7 @@ require_once 'Parsedown.php';
 require_once 'lunar/Lunar.php';
 
 use com\nlf\calendar\Solar;
+use com\nlf\calendar\Lunar;
 
 $db = getDB();
 if (!$db) {
@@ -103,23 +104,31 @@ $parsedown = new Parsedown();
                 return $solarHolidays[$today];
             }
             
-            // 获取节日列表
-            $festivals = $solar->getFestivals();
+            // 获取农历对象
+            $lunar = $solar->getLunar();
+            
+            // 检查节气（清明节是节气，不是农历节日）
+            $jieQi = $lunar->getJieQi();
+            if ($jieQi === '清明') {
+                return 'qingming';
+            }
+            
+            // 获取农历节日列表
+            $festivals = $lunar->getFestivals();
             
             // 检查农历节日
             foreach ($festivals as $festival) {
                 switch ($festival) {
                     case '春节':
-                    case '大年初一':
                         return 'spring';
-                    case '清明节':
-                        return 'qingming';
                     case '端午节':
                         return 'dragon';
                     case '七夕节':
                         return 'qixi';
                     case '中秋节':
                         return 'midautumn';
+                    case '除夕':
+                        return 'spring';
                 }
             }
             

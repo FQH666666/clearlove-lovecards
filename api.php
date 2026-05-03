@@ -243,4 +243,28 @@ if ($action === 'check_update') {
     exit;
 }
 
+// 云端AI审核测试接口
+if ($action === 'cloud_ai_test') {
+    $content = trim($_POST['content'] ?? '');
+    
+    if (empty($content)) {
+        echo json_encode(['success' => false, 'error' => '内容不能为空']);
+        exit;
+    }
+    
+    $result = checkCloudAiContent($content);
+    
+    // 添加诊断信息（方便排查问题）
+    $result['_debug'] = [
+        'ai_enabled' => defined('CLOUD_AI_CHECK_ENABLED') && CLOUD_AI_CHECK_ENABLED,
+        'cloud_url' => defined('CLOUD_CONTROL_URL') ? CLOUD_CONTROL_URL : '未配置',
+        'cloud_response' => isset($result['_cloud_raw']) ? '有响应' : '无响应（已降级为安全）',
+        'cloud_error' => $result['_cloud_raw']['error'] ?? null,
+    ];
+    unset($result['_cloud_raw']);
+    
+    echo json_encode($result);
+    exit;
+}
+
 echo json_encode(['success' => false, 'error' => '无效操作']);

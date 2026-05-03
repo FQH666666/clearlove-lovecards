@@ -181,7 +181,11 @@ function callCloudApi($action, $data = []) {
             'header' => "Content-type: application/x-www-form-urlencoded\r\n",
             'method' => 'POST',
             'content' => http_build_query($data),
-            'timeout' => 5,
+            'timeout' => 30,
+        ],
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
         ],
     ];
     
@@ -189,7 +193,12 @@ function callCloudApi($action, $data = []) {
     $result = @file_get_contents($url, false, $context);
     
     if ($result === false) {
-        return ['error' => 'API调用失败'];
+        $error = error_get_last();
+        $errorMsg = 'API调用失败';
+        if ($error && isset($error['message'])) {
+            $errorMsg .= '：' . preg_replace('/^file_get_contents[^:]*: /', '', $error['message']);
+        }
+        return ['error' => $errorMsg];
     }
     
     return json_decode($result, true);
@@ -341,6 +350,7 @@ function saveEnvConfig($config) {
     $envContent .= "define('BG_MUSIC_ENABLED', " . ($config['bg_music_enabled'] ? 'true' : 'false') . ");\n";
     $envContent .= "define('BG_MUSIC_FILE', '" . addslashes($config['bg_music_file'] ?? '') . "');\n";
     $envContent .= "define('BG_MUSIC_VOLUME', " . intval($config['bg_music_volume'] ?? 50) . ");\n";
+    $envContent .= "define('CLOUD_AI_CHECK_ENABLED', " . (isset($config['cloud_ai_check_enabled']) && $config['cloud_ai_check_enabled'] ? 'true' : 'false') . ");\n";
     $envContent .= "define('INSTALLED', true);\n";
     
     if (file_put_contents($tempPath, $envContent) === false) {
@@ -354,3 +364,56 @@ function saveEnvConfig($config) {
     
     return true;
 }
+
+// 云端AI审核函数
+function checkCloudAiContent($content) {
+    // 默认安全响应
+    $defaultSafeResponse = [
+        'success' => true,
+        'safe' => true,
+        'message' => '✅ 内容安全，允许发布',
+        'reason' => '本地检测通过',
+        'suggestion' => ''
+    ];
+    
+    // 检查是否启用云端AI审核
+    if (!defined('CLOUD_AI_CHECK_ENABLED') || !CLOUD_AI_CHECK_ENABLED) {
+        $defaultSafeResponse['message'] = '云端AI审核未启用';
+        return $defaultSafeResponse;
+    }
+    
+    // 检查云控中心URL是否配置
+    if (!defined('CLOUD_CONTROL_URL') || empty(CLOUD_CONTROL_URL)) {
+        $defaultSafeResponse['message'] = '云控中心未配置';
+        return $defaultSafeResponse;
+    }
+    
+    // 调用云控中心的AI审核接口
+    $result = callCloudApi('ai_check', ['content' => $content]);
+    
+    if (isset($result['error'])) {
+        error_log("[云端AI审核] 错误: " . $result['error']);
+        // API调用失败，降级返回安全（不影响用户发帖），但附带原始错误信息
+        $defaultSafeResponse['_cloud_raw'] = $result;
+        return $defaultSafeResponse;
+    }
+    
+    if (!isset($result['success']) || !$result['success']) {
+        error_log("[云端AI审核] 返回失败: " . ($result['error'] ?? '未知错误'));
+        $defaultSafeResponse['_cloud_raw'] = $result;
+        return $defaultSafeResponse;
+    }
+    
+    // 构建返回结果
+    $isSafe = isset($result['safe']) && $result['safe'];
+    
+    return [
+        'success' => true,
+        'safe' => $isSafe,
+        'message' => $isSafe ? '✅ 内容安全，允许发布' : '❌ 内容违规，将被拦截',
+        'reason' => isset($result['reason']) ? $result['reason'] : ($isSafe ? '' : '云端AI判定违规'),
+        'suggestion' => $isSafe ? '' : '请遵守社区规范，发布文明健康的内容。',
+        '_cloud_raw' => $result,
+    ];
+}
+

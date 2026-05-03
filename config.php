@@ -21,7 +21,10 @@ if (!defined('DB_TYPE')) {
 // 云控中心配置
 define('CLOUD_CONTROL_URL', 'https://clearlove.kazx.top/yun.php');
 define('ENCRYPTION_KEY', 'your_encryption_key_here');
-define('APP_VERSION', '1.3.3');
+define('APP_VERSION', '1.6.0');
+if (!defined('CLOUD_AI_CHECK_ENABLED')) {
+    define('CLOUD_AI_CHECK_ENABLED', false);  // 云端AI审核开关（默认关闭）
+}
 
 define('UPLOAD_DIR', __DIR__ . '/uploads');
 define('MAX_MEDIA', 8);

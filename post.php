@@ -38,6 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
+                // 云端AI内容审核（在敏感词检查之后）
+                if (!isset($error)) {
+                    $aiResult = checkCloudAiContent($content);
+                    if (!$aiResult['safe']) {
+                        $error = '内容包含违规信息（AI审核），请修改后重试';
+                    }
+                }
+                
                 if (!isset($error)) {
                     if ($topic) {
                         if (DB_TYPE === 'mysql') {
@@ -766,6 +774,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 alert('请输入4位验证码');
                 return;
             }
+            
+            // 显示AI审核加载动画
+            showAiLoading();
+            
             fetch('api.php?action=verify_captcha', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -773,13 +785,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }).then(r => r.json()).then(data => {
                 if (data.success) {
                     document.getElementById('captchaModal').classList.remove('active');
-                    document.getElementById('postForm').submit();
+                    // 表单提交（loading会持续到服务器响应）
+                    setTimeout(() => {
+                        document.getElementById('postForm').submit();
+                    }, 300);
                 } else {
+                    hideAiLoading();
                     alert('验证码错误，请重试');
                     loadCaptcha();
                 }
+            }).catch(() => {
+                hideAiLoading();
+                alert('网络错误，请重试');
             });
         });
+
+        // AI审核加载动画
+        function showAiLoading() {
+            const loading = document.createElement('div');
+            loading.id = 'aiLoadingOverlay';
+            loading.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    animation: fadeIn 0.3s ease;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 40px;
+                        border-radius: 20px;
+                        text-align: center;
+                        max-width: 400px;
+                        width: 90%;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        animation: slideUp 0.4s ease;
+                    ">
+                        <div style="
+                            width: 80px;
+                            height: 80px;
+                            margin: 0 auto 24px;
+                            border: 4px solid #e5e7eb;
+                            border-top: 4px solid #8b5cf6;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                        "></div>
+                        
+                        <h3 style="
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #1f2937;
+                            margin: 0 0 12px 0;
+                        ">
+                            🤖 AI智能审核中...
+                        </h3>
+                        
+                        <p style="
+                            font-size: 14px;
+                            color: #6b7280;
+                            margin: 0 0 24px 0;
+                            line-height: 1.6;
+                        ">
+                            系统正在通过人工智能分析您的内容<br>
+                            请稍候，通常需要3-10秒
+                        </p>
+                        
+                        <div style="
+                            background: #f3f4f6;
+                            border-radius: 10px;
+                            padding: 16px;
+                            font-size: 13px;
+                            color: #9ca3af;
+                        ">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <span class="dot" style="
+                                    width: 8px;
+                                    height: 8px;
+                                    background: #8b5cf6;
+                                    border-radius: 50%;
+                                    animation: pulse 1.5s infinite;
+                                "></span>
+                                <span>内容安全检测</span>
+                                <span style="margin: 0 8px;">•</span>
+                                <span>敏感信息识别</span>
+                                <span style="margin: 0 8px;">•</span>
+                                <span>合规性审查</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from { 
+                            opacity: 0;
+                            transform: translateY(30px);
+                        }
+                        to { 
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                    @keyframes pulse {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.5; transform: scale(0.8); }
+                    }
+                </style>
+            `;
+            document.body.appendChild(loading);
+        }
+
+        function hideAiLoading() {
+            const loading = document.getElementById('aiLoadingOverlay');
+            if (loading) {
+                loading.remove();
+            }
+        }
     </script>
 </body>
 </html>

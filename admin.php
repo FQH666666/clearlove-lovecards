@@ -363,6 +363,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'bg_music_volume' => 50
         ]);
     }
+    
+    // 云端AI审核开关保存
+    if (isset($_POST['update_cloud_ai'])) {
+        saveEnvConfig([
+            'db_type' => DB_TYPE,
+            'db_host' => defined('DB_HOST') ? DB_HOST : '',
+            'db_name' => defined('DB_NAME') ? DB_NAME : '',
+            'db_user' => defined('DB_USER') ? DB_USER : '',
+            'db_pass' => defined('DB_PASS') ? DB_PASS : '',
+            'site_name' => SITE_NAME,
+            'theme' => defined('THEME') ? THEME : 'default',
+            'custom_colors' => defined('CUSTOM_COLORS') ? CUSTOM_COLORS : '#66bb6a,#42a5f5',
+            'pure_mode' => defined('PURE_MODE') ? PURE_MODE : false,
+            'sensitive_words' => defined('SENSITIVE_WORDS') ? SENSITIVE_WORDS : '',
+            'theme_auto_switch' => defined('THEME_AUTO_SWITCH') ? THEME_AUTO_SWITCH : 'off',
+            'bg_music_enabled' => defined('BG_MUSIC_ENABLED') ? BG_MUSIC_ENABLED : false,
+            'bg_music_file' => defined('BG_MUSIC_FILE') ? BG_MUSIC_FILE : '',
+            'bg_music_volume' => defined('BG_MUSIC_VOLUME') ? BG_MUSIC_VOLUME : 50,
+            'cloud_ai_check_enabled' => isset($_POST['cloud_ai_check_enabled'])
+        ]);
+    }
 }
 
 $visitStats = getVisitStats($db);
@@ -1418,6 +1439,58 @@ $fileTypes = $storage['fileTypes'];
                 </form>
             </div>
             
+            <!-- 云端AI审核设置 -->
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <i class="fas fa-robot text-purple-500"></i>
+                    云端AI内容审核
+                    <span style="margin-left: 8px; padding: 2px 10px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; vertical-align: middle;">Beta</span>
+                </div>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle mr-2" style="color: #3b82f6;"></i>
+                        开启后，用户发帖时系统会自动将内容发送至云控中心进行AI智能审核。需确保云控中心已配置AI服务。
+                    </p>
+                </div>
+                <form method="POST">
+                    <div class="form-group">
+                        <label class="form-label">启用云端AI审核</label>
+                        <div class="toggle-switch <?php echo (defined('CLOUD_AI_CHECK_ENABLED') && CLOUD_AI_CHECK_ENABLED) ? 'active' : ''; ?>" onclick="toggleSwitch(this)">
+                            <input type="checkbox" name="cloud_ai_check_enabled" value="1" <?php echo (defined('CLOUD_AI_CHECK_ENABLED') && CLOUD_AI_CHECK_ENABLED) ? 'checked' : ''; ?> style="display: none;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">当前状态</label>
+                        <div style="padding: 12px; background: <?php echo (defined('CLOUD_AI_CHECK_ENABLED') && CLOUD_AI_CHECK_ENABLED) ? '#d4edda' : '#f8f9fa'; ?>; border-radius: 6px; font-size: 14px;">
+                            <?php if (defined('CLOUD_AI_CHECK_ENABLED') && CLOUD_AI_CHECK_ENABLED): ?>
+                                <span style="color: #155724;"><i class="fas fa-check-circle mr-2"></i>已启用 - 用户发帖将通过云端AI审核</span>
+                            <?php else: ?>
+                                <span style="color: #666;"><i class="fas fa-circle mr-2"></i>未启用 - 仅使用本地敏感词检测</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <button type="submit" name="update_cloud_ai" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i>保存AI审核设置
+                    </button>
+                </form>
+                
+                <!-- AI测试区域 -->
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+                    <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a202c;">
+                        <i class="fas fa-vial mr-2" style="color: #9333ea;"></i>测试AI审核效果
+                    </h4>
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <input type="text" id="cloudAiTestContent" placeholder="输入要测试的内容..." 
+                               style="flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                        <button onclick="testCloudAi()" 
+                                style="padding: 10px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                            <i class="fas fa-play mr-2"></i>开始测试
+                        </button>
+                    </div>
+                    <div id="cloudAiTestResult" style="display: none;"></div>
+                </div>
+            </div>
+            
         <?php elseif ($page === 'posts'): ?>
             <div class="page-header">
                 <h1 class="page-title">
@@ -2062,6 +2135,117 @@ $fileTypes = $storage['fileTypes'];
             document.getElementById('updateModal').classList.add('active');
         }, 1000);
         <?php endif; ?>
+        
+        // 测试云端AI审核
+        function testCloudAi() {
+            const content = document.getElementById('cloudAiTestContent').value.trim();
+            const resultDiv = document.getElementById('cloudAiTestResult');
+            
+            if (!content) {
+                alert('请输入测试内容');
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div style="padding: 16px; background: #eff6ff; border-radius: 8px; color: #1e40af;"><i class="fas fa-spinner fa-spin mr-2"></i>正在调用云端AI审核（通过本地API代理）...</div>';
+            
+            // 通过本地API代理调用云控中心，避免浏览器混合内容拦截
+            const apiUrl = 'api.php?action=cloud_ai_test';
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'content=' + encodeURIComponent(content)
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                // 显示调试信息
+                let debugHtml = '';
+                if (data._debug) {
+                    debugHtml = `
+                        <div style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; font-size: 12px; font-family: monospace;">
+                            <strong>诊断信息：</strong><br>
+                            AI审核开关：${data._debug.ai_enabled ? '已开启' : '未开启'}<br>
+                            API状态：${data._debug.cloud_response}<br>
+                            ${data._debug.cloud_error ? '错误信息：' + data._debug.cloud_error : ''}
+                        </div>
+                    `;
+                }
+                
+                if (data.success) {
+                    if (data.safe) {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 16px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px;">
+                                <div style="font-weight: 600; color: #155724; margin-bottom: 8px;">
+                                    <i class="fas fa-check-circle mr-2"></i>✅ 内容安全，允许发布
+                                </div>
+                                ${data.reason ? '<div style="font-size: 14px; color: #666;">原因：' + data.reason + '</div>' : ''}
+                                ${debugHtml}
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 16px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px;">
+                                <div style="font-weight: 600; color: #721c24; margin-bottom: 8px;">
+                                    <i class="fas fa-times-circle mr-2"></i>❌ 内容违规，将被拦截
+                                </div>
+                                ${data.reason ? '<div style="font-size: 14px; color: #666;">原因：' + data.reason + '</div>' : ''}
+                                ${debugHtml}
+                            </div>
+                        `;
+                    }
+                } else {
+                    let errorContent = data.error || '未知错误';
+                    let detailContent = data.detail ? '<div style="font-size: 12px; color: #999; margin-top: 8px;">详情：' + data.detail + '</div>' : '';
+                    
+                    resultDiv.innerHTML = `
+                        <div style="padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px;">
+                            <div style="font-weight: 600; color: #856404; margin-bottom: 8px;">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>❌ 测试失败
+                            </div>
+                            <div style="font-size: 14px; color: #666;">${errorContent}</div>
+                            ${detailContent}
+                            ${debugHtml}
+                        </div>
+                    `;
+                }
+            })
+            .catch(err => {
+                console.error('[CloudAI Test Error]', err);
+                
+                let errorMsg = '请求失败';
+                let errorDetail = err.message;
+                let suggestion = '';
+                
+                if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+                    errorMsg = '🌐 网络连接失败';
+                    errorDetail = '无法访问本地API接口（api.php）';
+                    suggestion = `
+                        <div style="margin-top: 12px; padding: 12px; background: #fef2f2; border-radius: 6px; font-size: 13px;">
+                            <strong>可能原因：</strong><br>
+                            api.php 文件不存在或路径不正确
+                        </div>
+                    `;
+                }
+                
+                resultDiv.innerHTML = `
+                    <div style="padding: 20px; background: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; color: #991b1b;">
+                        <div style="font-weight: 600; margin-bottom: 12px; font-size: 16px;">
+                            <i class="fas fa-times-circle mr-2"></i>${errorMsg}
+                        </div>
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong>技术细节：</strong>${errorDetail}
+                        </div>
+                        ${suggestion}
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
